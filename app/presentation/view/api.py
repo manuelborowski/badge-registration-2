@@ -1,6 +1,6 @@
 from flask import request, Blueprint
 from app import log, app, data as dl, application as al
-import json, inspect, html
+import json, inspect, html, datetime
 from functools import wraps
 from flask_login import login_user, logout_user
 
@@ -59,25 +59,11 @@ def level_5(func):
         return api_core(5, func, *args, **kwargs)
     return wrapper
 
-@bp_api.route('/api/registration/add', methods=['POST'])
+# timestamp changes only when the server is rebooted
+hb_timestamp = int(datetime.datetime.now().timestamp())
 @level_1
-def registration_add(*args, **kwargs):
-    client_ip = kwargs['remote_ip'] if 'remote_ip' in kwargs else None
-    data = json.loads(request.data)
-    rfid_code = data["badge_code"].upper() if "badge_code" in data else None
-    leerlingnummer = data["leerlingnummer"] if "leerlingnummer" in data else None
-    location = data["location_key"].replace("--SLASH--", "/")
-    timestamp = data["timestamp"] if "timestamp" in data else None
-    ret = {}
-    for item in ret:
-        if item["to"] == "ip" and client_ip:
-            al.socketio.send_to_room(item, client_ip)
-        elif item["to"] == "location":
-            al.socketio.send_to_room(item, location)
-        elif item["to"] == "broadcast":
-            al.socketio.broadcast_message(item)
-        else:
-            log.error(f'{inspect.currentframe().f_code.co_name}: No valid "to" parameter: {item["to"]}')
-            return json.dumps({"status": False, "data": f'No valid "to" parameter: {item["to"]}'})
-    return json.dumps({"status": True})
+@bp_api.route('/api/hb', methods=['GET'])
+def hb():
+    ret = {"hb": hb_timestamp}
+    return json.dumps(ret)
 

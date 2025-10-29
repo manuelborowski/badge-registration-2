@@ -1,11 +1,13 @@
 import {ButtonMenu} from "./common/button_menu.js";
 import {menu} from "./project/menu.js";
+import {check_server_alive} from "./common/common.js";
 
 export const inject_menu = new_menu => {
     menu = new_menu;
 }
 
 export const base_init = ({button_menu_items = []}) => {
+    check_server_alive();
     if (suppress_navbar) return;
 
     const navbar_element = document.querySelector("#navbar");

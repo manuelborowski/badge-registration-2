@@ -70,3 +70,31 @@ export const now_iso_string = () => {
     const iso_now = now.toJSON().substring(0, 19).replace(/T../, ` ${now.getHours()}`);
     return iso_now
 }
+
+// To make sure the client reloads when the server is rebooted, different mechanisms are implemented.
+// On a development server (no webserver), the fetch throws an exception which is handled in the catch
+// On a webserver, the fetch returns a status 502
+// On a webserver, if the service is restarted (sudo systemctl restart service-name), this can happen so fast that the client does not perceive it correctly,
+// i.e. the socketio is interrupted but it is not noticed by the catch or the 502.
+// Therefore, the hb returns a timestamp from the server, which is changed each time the server reboots.  If the client notices the timestamp has changed, it reloads.
+let popup_alert = null;
+export const check_server_alive = async () => {
+    try {
+        const ret = await fetch(Flask.url_for('api.hb'), {signal: AbortSignal.timeout(2000)});
+        if (ret.status in [502, 504]) throw new Error(); // server says: bad gateway
+        const status = await ret.json();
+        if (localStorage.getItem("reboot") === "true" || localStorage.getItem("hb-timestamp") !== status.hb.toString()) {
+            localStorage.setItem("reboot", "false");
+            localStorage.setItem("hb-timestamp", status.hb);
+            location.reload();
+             if (popup_alert) {
+                 popup_alert.hide();
+                 popup_alert = null;
+             }
+        }
+    } catch  {
+        localStorage.setItem("reboot", "true");
+        if (!popup_alert) popup_alert = new AlertPopup("warning", "Systeem buiten dienst, even geduld aub...", 0);
+    }
+    setTimeout(check_server_alive, 3000);
+};

@@ -13,8 +13,9 @@ from werkzeug.routing import IntegerConverter
 # 0.1 copy from stopwatch V0.28
 # 0.2: replaced sys._getframe() with inspect
 # 0.3: aesthetic updates
+# 0.4: implemented heartbeat
 
-version = "0.3"
+version = "0.4"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
@@ -82,9 +83,9 @@ ap_scheduler.init_app(app)
 ap_scheduler.start()
 
 # Should be last to avoid circular import
-from app.presentation.view import auth, api, user, settings, mobile
+from app.presentation.view import auth, api, user, settings
 app.register_blueprint(auth.bp_auth)
 app.register_blueprint(api.bp_api)
 app.register_blueprint(user.bp_user)
 app.register_blueprint(settings.bp_settings)
-app.register_blueprint(mobile.bp_mobile)
+
