@@ -20,7 +20,7 @@ bp_settings = Blueprint('settings', __name__)
 @login_required
 def show():
     cron_module_enable_settings = dl.settings.get_configuration_setting('cron-enable-modules')
-    return render_template('settings.html', data=[])
+    return render_template('project/settings.html', data=[])
 
 
 @bp_settings.route('/setting', methods=['GET', 'UPDATE'])

@@ -9,8 +9,8 @@ import app.data.models
 class User(UserMixin, db.Model, SerializerMixin):
     __tablename__ = 'users'
 
-    date_format = '%d/%m/%Y'
-    datetime_format = '%d/%m/%Y %H:%M'
+    date_format = '%Y-%m-%d'
+    datetime_format = '%Y-%m-%d %H:%M'
     serialize_rules = ("-password_hash","-url_token")
 
     class USER_TYPE:
@@ -29,7 +29,6 @@ class User(UserMixin, db.Model, SerializerMixin):
         4: "Secretariaat+",
         5: "Administrator"
     }
-
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(256))

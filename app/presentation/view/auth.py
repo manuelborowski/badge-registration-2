@@ -18,16 +18,20 @@ def login():
         message = None
         user_agent_str = request.headers.get('User-Agent')
         user_agent = parse(user_agent_str)
-        url = f"{request.root_url}"
-        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4, )
-        qr.add_data(url)
-        qr.make(fit=True)
-        img = qr.make_image(fill="black", back_color="white")
-        img_io = io.BytesIO()
-        img.save(img_io, format="PNG")
-        img_io.seek(0)
-        img_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
-        secret_pin = dl.settings.get_configuration_setting("mobile-login-pin")
+        if app.config["MOBILE_LOGIN_ENABLE"]:
+            url = f"{request.root_url}"
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4, )
+            qr.add_data(url)
+            qr.make(fit=True)
+            img = qr.make_image(fill="black", back_color="white")
+            img_io = io.BytesIO()
+            img.save(img_io, format="PNG")
+            img_io.seek(0)
+            img_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
+            secret_pin = dl.settings.get_configuration_setting("mobile-login-pin")
+        else:
+            img_base64 = None
+            secret_pin = None
         if request.method == "POST":
             if user_agent.is_mobile:
                 login_pin = request.form["login-pin"]
@@ -41,7 +45,7 @@ def login():
                     if not user:
                         log.error('Could not save timestamp')
                     # Ok, continue
-                    return redirect(url_for('mobile.show_scan'))
+                    return redirect(url_for(app.config["MENU_MOBILE_DEFAULT"]))
                 else:
                     log.error(f'{sys._getframe().f_code.co_name}: Invalid pin')
                     message = {"status": "error", "data": "Ongeldige pin"}
@@ -56,19 +60,19 @@ def login():
                     if not user:
                         log.error('Could not save timestamp')
                     # Ok, continue
-                    return redirect(url_for('person.show'))
+                    return redirect(url_for(app.config["MENU_DEFAULT"]))
                 else:
                     log.error(f'{sys._getframe().f_code.co_name}: Invalid username/password')
                     message = {"status": "error", "data": "Ongeldig(e) gebruikersnaam/wachtwoord"}
-                    return render_template('login.html', message=message, qr=img_base64, pin=secret_pin)
+                    return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
         if user_agent.is_mobile:
             return render_template('m/login.html')
         else:
-            return render_template('login.html', message=message, qr=img_base64, pin=secret_pin)
+            return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
     except Exception as e:
         message = {"status": "error", "data": f"{str(e)}"}
         log.error(f'{sys._getframe().f_code.co_name}: {str(e)}')
-        return render_template('login.html', message=message)
+        return render_template('login.html', message=message, qr_img=None, qr_caption="")
 
 @bp_auth.route('/logout')
 @login_required
@@ -124,8 +128,8 @@ def login_ss():
                 user_agent_str = request.headers.get('User-Agent')
                 user_agent = parse(user_agent_str)
                 if user_agent.is_mobile:
-                    return redirect(url_for('mobile.show_scan'))
-                return redirect(url_for('person.show'))
+                    return redirect(url_for(app.config["MENU_MOBILE_DEFAULT"]))
+                return redirect(url_for(app.config["MENU_DEFAULT"]))
         else:
             redirect_uri = f'{app.config["SMARTSCHOOL_OUATH_REDIRECT_URI"]}/ss'
             return redirect(f'{app.config["SMARTSCHOOL_OAUTH_SERVER"]}?app_uri={redirect_uri}')
@@ -143,6 +147,6 @@ def auto_login_generic():
             user = dl.user.update(user, {"last_login": datetime.datetime.now()})
             if not user:
                 log.error('Could not save timestamp')
-            return redirect(url_for('person.show'))
+            return redirect(url_for(app.config["MENU_DEFAULT"]))
     return render_template('login.html', message=None)
 

@@ -19,9 +19,6 @@
                     {% for h in table_config.template %}
                         {% if h.name=='row_action' %}
                             <th><input type='checkbox' id="select_all"></th>
-                        {% elif h.name=='reviewed' %}
-                            <th><img src="static/img/reviewed.png" style="width:20px;height:20px;"
-                                     title="Reeds gecontroleerd?"></th>
                         {% else %}
                             <th title="{{ h.tt if 'tt' in h else '' }}">{{ h.name }}</th>
                         {% endif %}

@@ -15,9 +15,9 @@
 <div class="container">
     <main class="content">
         <div style="display: flex;flex-wrap: wrap;">
-            <div style="display: flex;flex-direction: column;align-items: center">
-                <img id="login-url-img" src="data:image/png;base64,{{ qr }}" alt="QR Code" class="login-image">
-                <b>Mobiele scanner (Android only)</b><br>
+            <div id="mobile-scanner-enable" style="display: flex;flex-direction: column;align-items: center" {% if qr_img == None %}hidden{% endif %}>
+                <img id="login-url-img" src="data:image/png;base64,{{ qr_img }}" alt="QR Code" class="login-image">
+                <b>{{ qr_caption }}</b><br>
             </div>
             <div class="login-group">
                 <h2>Aanmelden met gebruikersnaam</h2>
@@ -37,7 +37,7 @@
                 <h2>Of aanmelden via Smartschool</h2>
                 <a href="{{ url_for('auth.login_ss') }}"><img src="static/img/btn_smartschool.png" alt="aanmelden via smartschool"></a>
             </div>
-            <img src="static/img/stopwatch.png" class="login-image">
+            <img src="static/img/logo.png" class="login-image">
         </div>
     </main>
 
@@ -55,6 +55,7 @@
     $(document).ready(function () {
         const message = {{ message|tojson or null }};
         if (message) new AlertPopup(message.status, message.data);
+
     });
 </script>
 </body>

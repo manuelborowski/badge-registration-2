@@ -68,7 +68,7 @@ def registration_add(*args, **kwargs):
     leerlingnummer = data["leerlingnummer"] if "leerlingnummer" in data else None
     location = data["location_key"].replace("--SLASH--", "/")
     timestamp = data["timestamp"] if "timestamp" in data else None
-    ret = al.person.registration_add(location, timestamp, leerlingnummer, rfid_code)
+    ret = {}
     for item in ret:
         if item["to"] == "ip" and client_ip:
             al.socketio.send_to_room(item, client_ip)
@@ -80,13 +80,4 @@ def registration_add(*args, **kwargs):
             log.error(f'{sys._getframe().f_code.co_name}: No valid "to" parameter: {item["to"]}')
             return json.dumps({"status": False, "data": f'No valid "to" parameter: {item["to"]}'})
     return json.dumps({"status": True})
-
-@bp_api.route('/api/result/pdf', methods=['POST'])
-@level_1
-def result_to_pdf(*args, **kwargs):
-    data = json.loads(request.data)
-    klasgroep = data["klasgroep"] if "klasgroep" in data else None
-    lijst = data["lijst"] if "lijst" in data else None
-    ret = al.person.result_to_pdf(klasgroep, lijst)
-    return json.dumps(ret)
 

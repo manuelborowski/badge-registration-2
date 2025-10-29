@@ -3,7 +3,6 @@ from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy_serializer import SerializerMixin
 import json, yaml, re, sys
 
-
 class Settings(db.Model, SerializerMixin):
     __tablename__ = 'settings'
 
@@ -47,8 +46,6 @@ def get_setting(name, user=None, convert_to_string=False):
         db.session.rollback()
         log.error(f'{sys._getframe().f_code.co_name}: {e}')
         return False, ''
-    return True, value
-
 
 def add_setting(name, value, type=Settings.SETTING_TYPE.E_STRING, user=None):
     try:
@@ -63,7 +60,6 @@ def add_setting(name, value, type=Settings.SETTING_TYPE.E_STRING, user=None):
         db.session.rollback()
         log.error(f'{sys._getframe().f_code.co_name}: {e}')
         raise e
-
 
 def set_setting(name, value, user=None):
     try:
@@ -84,35 +80,23 @@ def set_setting(name, value, user=None):
         return False
     return True
 
-
 default_configuration_settings = {
     'generic-new-via-smartschool-default-level': (1, Settings.SETTING_TYPE.E_INT),
     'generic-new-via-smartschool': (True, Settings.SETTING_TYPE.E_BOOL),
 
+    'mobile-login-pin': ('', Settings.SETTING_TYPE.E_STRING),
+
     'user-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
-    'person-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
-    'checkin-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
-    'result-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
-    'spare-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
 
     'cron-scheduler-template': ('', Settings.SETTING_TYPE.E_STRING),
     'cron-enable-modules': ({}, Settings.SETTING_TYPE.E_JSON),
-
-    "list-colors": ({}, Settings.SETTING_TYPE.E_YAML),
-
-    "api-keys": ({}, Settings.SETTING_TYPE.E_YAML),
-
-    'mobile-login-pin': ('', Settings.SETTING_TYPE.E_STRING),
-
 }
-
 
 def get_configuration_settings(convert_to_string=False):
     configuration_settings = {}
     for k in default_configuration_settings:
         configuration_settings[k] = get_configuration_setting(k, convert_to_string)
     return configuration_settings
-
 
 def set_configuration_setting(setting, value, user=None):
     if None == value:
@@ -123,7 +107,6 @@ def set_configuration_setting(setting, value, user=None):
             cb[0](value, cb[1])
     return ret
 
-
 def get_configuration_setting(setting, convert_to_string=False, user=None):
     found, value = get_setting(setting, user=user, convert_to_string=convert_to_string)
     if found:
@@ -133,7 +116,6 @@ def get_configuration_setting(setting, convert_to_string=False, user=None):
         add_setting(setting, default_setting[0], default_setting[1], user=user)
         return default_setting[0]
 
-
 setting_changed_cb = {}
 def subscribe_setting_changed(setting, cb, opaque):
     if setting in setting_changed_cb:
@@ -142,7 +124,6 @@ def subscribe_setting_changed(setting, cb, opaque):
         setting_changed_cb[setting] = [(cb, opaque)]
     return True
 
-
 def set_json_template(key, data):
     try:
         template_string = json.dumps(data)
@@ -150,7 +131,6 @@ def set_json_template(key, data):
         return set_configuration_setting(key, template_string)
     except json.JSONDecodeError as e:
         raise Exception(f'Template has invalid JSON syntax: {key}, {data}, {e}')
-
 
 def get_datatables_config(key):
     return get_configuration_setting(f'{key}-datatables-template')

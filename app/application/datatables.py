@@ -7,11 +7,6 @@ from app import MyLogFilter, top_log_handle
 log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 
-
-######################################################################################################
-###                                       Build a generic filter
-######################################################################################################
-
 def datatable_get_data(table_config, parameters, paginate=True):
     try:
         template = table_config.template

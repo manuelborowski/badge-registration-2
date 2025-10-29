@@ -16,7 +16,7 @@ bp_user = Blueprint('user', __name__)
 @level_5_required
 @login_required
 def show():
-    return render_template("user.html", table_config=config.create_table_config())
+    return render_template("project/user.html", table_config=config.create_table_config())
 
 # invoked when the client requests data from the database
 al.socketio.subscribe_on_type("user-datatable-data", lambda type, data: datatable_get_data(config, data))
@@ -24,7 +24,7 @@ al.socketio.subscribe_on_type("user-datatable-data", lambda type, data: datatabl
 @bp_user.route('/user', methods=["POST", "UPDATE", "DELETE", "GET"])
 @level_5_required
 @login_required
-def user():
+def user(id=None):
     if request.method == "UPDATE":
         data = json.loads(request.data)
         ret = al.user.update(data)
@@ -35,7 +35,6 @@ def user():
         ret = al.user.delete(request.args["ids"].split(","))
     else: # GET
         ret = al.models.get(dl.user.User, request.args)
-        # ret = al.user.get(request.args)
     return json.dumps(ret)
 
 @bp_user.route('/user/meta', methods=['GET'])
@@ -65,5 +64,15 @@ class Config(DatatableConfig):
     def format_data(self, db_list, total_count=None, filtered_count=None):
         return al.user.format_data(db_list, total_count, filtered_count)
 
+    # def post_process_template(self, template):
+    # Check project laptop-incident-systeem::view\incident.py
+    # Create custom datatable-cell render functions.
+
 config = Config("user", "Gebruikers")
+
+@bp_user.route('/usershowm', methods=['GET', 'POST'])
+@level_5_required
+@login_required
+def showm():
+    return render_template("project/m/user.html")
 

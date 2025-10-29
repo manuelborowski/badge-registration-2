@@ -8,10 +8,6 @@ const template =
         {
             type: "container", label: "Templates", save: true, default_collapsed: true, rows: [
                 {label: "Gebruikers", name: "user-datatables-template", type: "textarea"},
-                {label: "Personen", name: "person-datatables-template", type: "textarea"},
-                {label: "Aanmelden", name: "checkin-datatables-template", type: "textarea"},
-                {label: "Resultaten", name: "result-datatables-template", type: "textarea"},
-                {label: "Reserve badges", name: "spare-datatables-template", type: "textarea"},
             ]
         },
         {
@@ -29,11 +25,6 @@ const template =
                             {label: "Start", id: "button-start-cron-cycle", type: "button", class: "btn btn-success"}],
                         {id: "cron-enable-modules", type: "div"},
 
-                    ]
-                },
-                {
-                    type: "container", label: "Kleuren", save: true, default_collapsed: true, rows: [
-                        {label: "YAML", name: "list-colors", type: "textarea"},
                     ]
                 },
                 {

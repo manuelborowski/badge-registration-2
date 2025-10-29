@@ -1,5 +1,8 @@
 import {AlertPopup} from "./popup.js";
 
+// The data returned should contain:
+// status and msg: show a popup message
+// or data: opqaue and should be handled by the calling module
 const __handle_fetch = async resp => {
     const data = await resp.json();
     if (data && "status" in data) {

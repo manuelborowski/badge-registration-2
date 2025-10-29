@@ -9,7 +9,7 @@ from app import MyLogFilter, top_log_handle
 log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 
-CRON_TASK = 'laptop-incident-systeem-task'
+CRON_TASK = 'system-task'
 
 def cron_task():
     with app.app_context():

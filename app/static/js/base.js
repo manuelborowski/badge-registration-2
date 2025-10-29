@@ -1,14 +1,5 @@
 import {ButtonMenu} from "./common/button_menu.js";
-
-var menu = [
-    { endpoint: "result.show", label: "Resultaten", userlevel: 2},
-    { endpoint: "list.show", label: "Lijsten", userlevel: 2},
-    { endpoint: "checkin.show", label: "Aanmelden", userlevel: 2 },
-    { endpoint: "person.show", label: "Deelnemers", userlevel: 1 },
-    { endpoint: "spare.show", label: "Reserve badges", userlevel: 2},
-    { endpoint: "user.show", label: "Gebruikers", userlevel: 5 },
-    { endpoint: "settings.show", label: "Instellingen", userlevel: 5 },
-];
+import {menu} from "./project/menu.js";
 
 export const inject_menu = new_menu => {
     menu = new_menu;
@@ -85,10 +76,13 @@ export const base_init = ({button_menu_items = []}) => {
             navbar_element.appendChild(li);
         }
     }
-
     const button_menu = new ButtonMenu(document.querySelector(".button-menu-placeholder"), button_menu_items);
 }
 
+
+// check project tickoff::js/base.js
+// A menu item (which is a regular link to a page) can be extended with an extra argument.
+// Normally, the extra argument will depend on a filter on that page and is normally stored in localStorage
 export const argument_set = (arg, val) => {
     localStorage.setItem(`menu-argument-${arg}`, val);
 }

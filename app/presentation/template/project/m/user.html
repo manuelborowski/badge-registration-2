@@ -1,0 +1,14 @@
+{% extends "m/base.html" %}
+
+{% block body %}
+    <div>
+        <div id="user-list"></div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+    </script>
+    <script type="module" src="/static/js/project/m/user.js"></script>
+{% endblock %}
