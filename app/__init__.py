@@ -1,4 +1,4 @@
-import logging.handlers, os, sys
+import logging.handlers, os, sys, inspect
 from flask import Flask
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
@@ -11,8 +11,9 @@ from werkzeug.routing import IntegerConverter
 #Warning: update flask_jsglue.py: from markupsafe import Markup
 
 # 0.1 copy from stopwatch V0.28
+# 0.2: replaced sys._getframe() with inspect
 
-version = "0.1"
+version = "0.2"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
@@ -65,12 +66,12 @@ def default_db_entries():
             for user in app.config["DEFAULT_USERS"]:
                 find_user = User.query.filter(User.username == user[0]).first()
                 if not find_user:
-                    new_user = User(username=user[0], password=user[1], level=user[2], first_name=user[3], user_type=User.USER_TYPE.LOCAL)
+                    new_user = User(username=user[0], password=user[1], level=user[2], first_name=user[3], user_type=User.USER_TYPE.LOCAL) # type: ignore[arg-type]
                     db.session.add(new_user)
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            log.error(f'{sys._getframe().f_code.co_name}: {e}')
+            log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
 
 default_db_entries()
 

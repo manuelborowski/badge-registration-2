@@ -2,7 +2,7 @@ from flask import redirect, render_template, url_for, request, Blueprint, sessio
 from flask_login import login_required, login_user, logout_user
 from app import app, data as dl
 from user_agents import parse
-import datetime, json, sys, qrcode, io, base64
+import datetime, json, inspect, qrcode, io, base64
 
 #logging on file level
 import logging
@@ -47,7 +47,7 @@ def login():
                     # Ok, continue
                     return redirect(url_for(app.config["MENU_MOBILE_DEFAULT"]))
                 else:
-                    log.error(f'{sys._getframe().f_code.co_name}: Invalid pin')
+                    log.error(f'{inspect.currentframe().f_code.co_name}: Invalid pin')
                     message = {"status": "error", "data": "Ongeldige pin"}
                     return render_template('m/login.html', message=message)
             else:
@@ -62,7 +62,7 @@ def login():
                     # Ok, continue
                     return redirect(url_for(app.config["MENU_DEFAULT"]))
                 else:
-                    log.error(f'{sys._getframe().f_code.co_name}: Invalid username/password')
+                    log.error(f'{inspect.currentframe().f_code.co_name}: Invalid username/password')
                     message = {"status": "error", "data": "Ongeldig(e) gebruikersnaam/wachtwoord"}
                     return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
         if user_agent.is_mobile:
@@ -71,7 +71,7 @@ def login():
             return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
     except Exception as e:
         message = {"status": "error", "data": f"{str(e)}"}
-        log.error(f'{sys._getframe().f_code.co_name}: {str(e)}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {str(e)}')
         return render_template('login.html', message=message, qr_img=None, qr_caption="")
 
 @bp_auth.route('/logout')
@@ -134,7 +134,7 @@ def login_ss():
             redirect_uri = f'{app.config["SMARTSCHOOL_OUATH_REDIRECT_URI"]}/ss'
             return redirect(f'{app.config["SMARTSCHOOL_OAUTH_SERVER"]}?app_uri={redirect_uri}')
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {str(e)}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {str(e)}')
 
 @bp_auth.route(f'/{app.config["AUTO_LOGIN_URL"] if "AUTO_LOGIN_URL" in app.config else "NA1"}', methods=['POST', 'GET'])
 def auto_login_generic():

@@ -1,7 +1,7 @@
 from app import log, db
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy_serializer import SerializerMixin
-import json, yaml, re, sys
+import json, yaml, re, inspect
 
 class Settings(db.Model, SerializerMixin):
     __tablename__ = 'settings'
@@ -44,7 +44,7 @@ def get_setting(name, user=None, convert_to_string=False):
         return False, ""
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return False, ''
 
 def add_setting(name, value, type=Settings.SETTING_TYPE.E_STRING, user=None):
@@ -58,7 +58,7 @@ def add_setting(name, value, type=Settings.SETTING_TYPE.E_STRING, user=None):
         return True
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         raise e
 
 def set_setting(name, value, user=None):
@@ -76,7 +76,7 @@ def set_setting(name, value, user=None):
             db.session.commit()
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return False
     return True
 

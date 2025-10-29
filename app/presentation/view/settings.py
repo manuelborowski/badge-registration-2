@@ -4,7 +4,7 @@ from flask_login import login_required
 from app import data as dl, application as al
 from app.presentation.view import fetch_return_error, level_5_required
 from app.application import cron_table
-import json, sys
+import json, inspect
 
 # logging on file level
 import logging
@@ -36,7 +36,7 @@ def setting():
             ret = al.settings.get()
         return json.dumps(ret)
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return fetch_return_error()
 
 @bp_settings.route('/button', methods=['POST'])
@@ -50,7 +50,7 @@ def button():
             al.settings.button(data["id"])
         return json.dumps(ret)
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return fetch_return_error()
 
 @bp_settings.route('/setting/meta', methods=['GET'])

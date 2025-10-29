@@ -1,5 +1,5 @@
 from sqlalchemy import or_
-import sys
+import inspect
 
 #logging on file level
 import logging
@@ -58,7 +58,7 @@ def datatable_get_data(table_config, parameters, paginate=True):
             formatted_data = table_config.post_sql_paginate(formatted_data, paginate_start, paginate_start + paginate_length)
 
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {str(e)}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {str(e)}')
         return {"status": False, "data": str(e)}
 
     output = {'draw': str(int(parameters['draw'])), 'recordsTotal': str(total_count), 'recordsFiltered': str(filtered_count), 'data': formatted_data}

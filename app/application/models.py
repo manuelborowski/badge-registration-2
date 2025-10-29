@@ -1,5 +1,5 @@
 import datetime
-import sys
+import inspect
 from app.data import models as mmodels
 
 #logging on file level
@@ -33,7 +33,7 @@ def __process_options(options):
         order_by = options["order_by"] if "order_by" in options else None
         return fields, filters, order_by, start, stop
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": True, "data": e}
 
 
@@ -69,5 +69,5 @@ def get(model, options=None):
             out = [s.to_dict() for s in items]
         return out
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         raise e

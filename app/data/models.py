@@ -1,13 +1,13 @@
 from app import log, db
 from sqlalchemy import text, desc, func
-import sys, datetime
+import inspect, datetime
 
 def commit():
     try:
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
 
 def add_single(model, data=None, commit=True, timestamp=False):
     if data is None:
@@ -30,7 +30,7 @@ def add_single(model, data=None, commit=True, timestamp=False):
         return obj
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None
 
 def add_multiple(model, data=None, timestamp=False):
@@ -42,7 +42,7 @@ def add_multiple(model, data=None, timestamp=False):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None
 
 def update_single(model, obj, data=None, commit=True, timestamp=False):
@@ -66,7 +66,7 @@ def update_single(model, obj, data=None, commit=True, timestamp=False):
         return obj
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None
 
 def update_multiple(model, data=None, timestamp=False):
@@ -80,7 +80,7 @@ def update_multiple(model, data=None, timestamp=False):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None
 
 def delete_multiple(model, ids=None, objs=None):
@@ -99,7 +99,7 @@ def delete_multiple(model, ids=None, objs=None):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None
 
 # filters is list of tupples: [(key, operator, value), ...]
@@ -159,7 +159,7 @@ def get_multiple(model, filters=None, fields=None, order_by=None, first=False, c
         objs = q.all()
         return objs
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         raise e
 
 def get_first_single(model, filters=None, order_by=None):
@@ -169,5 +169,5 @@ def get_first_single(model, filters=None, order_by=None):
         obj = get_multiple(model, filters, order_by=order_by, first=True)
         return obj
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None

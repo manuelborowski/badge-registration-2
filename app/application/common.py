@@ -1,5 +1,5 @@
 from app import data as dl
-import datetime, sys
+import datetime, inspect
 
 #logging on file level
 import logging
@@ -17,5 +17,5 @@ def ini2timedelta(ini_string):
         init_format = ['days', 'hours', 'minutes', 'seconds']
         return datetime.timedelta(**{k: v for k, v in zip(init_format, [int(i) for i in ini_string.split(",")])})
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
 

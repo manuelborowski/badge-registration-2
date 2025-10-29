@@ -1,4 +1,4 @@
-import sys, qrcode, secrets, base64, io, hashlib
+import inspect, qrcode, secrets, base64, io, hashlib
 from app import data as dl
 from flask import request
 
@@ -20,7 +20,7 @@ def add(data):
         log.info(f"Add user: {data}")
         return {"status": "ok", "msg": f"Gebruiker, {user.username} toegevoegd."}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": str(e)}
 
 
@@ -46,7 +46,7 @@ def update(data):
                 return {"status": "ok", "msg": f"Gebruiker, {user.username} aangepast."}
         return {"status": "warning", "msg": f"Gebruiker met id {data['id']} bestaat niet"}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "data": str(e)}
 
 
@@ -55,7 +55,7 @@ def delete(ids):
         dl.user.delete(ids)
         return {"status": "ok", "msg": "Gebruikers zijn verwijderd"}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": str(e)}
 
 
@@ -75,7 +75,7 @@ def get(data):
         else:
             return {"status": "error", "msg": f"No valid data {data}"}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {data}, {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {data}, {e}')
         return {"status": "error", "msg": {str(e)}}
 
 def login_url_generate(user):
@@ -85,7 +85,7 @@ def login_url_generate(user):
         dl.user.commit()
         return url_token
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return None
 
 def qr_get(user, new_qr=False):
@@ -103,7 +103,7 @@ def qr_get(user, new_qr=False):
         img_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
         return {"qr": img_base64}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": {str(e)}}
 
 ############ user overview list #########

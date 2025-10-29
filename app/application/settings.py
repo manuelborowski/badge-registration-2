@@ -1,7 +1,7 @@
 from errno import ECHILD
 
 from app import data as dl
-import sys
+import inspect
 
 #logging on file level
 import logging
@@ -14,7 +14,7 @@ def get():
         settings = dl.settings.get_configuration_settings(convert_to_string=True)
         return {"data": settings}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {str(e)}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {str(e)}')
         return {"status": "error", "msg": str(e)}
 
 def update(data):
@@ -27,7 +27,7 @@ def update(data):
                 dl.settings.set_configuration_setting(setting, value)
         return {"status": "ok", "msg": "Aanpassingen bewaard"}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {str(e)}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {str(e)}')
         return {"status": "error", "msg": str(e)}
 
 def button(button):
@@ -37,7 +37,7 @@ def button(button):
             item["cb"](button, item["opaque"])
         return {}
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {str(e)}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {str(e)}')
         return {"status": "error", "msg": str(e)}
 
 update_setting_cbs = {}

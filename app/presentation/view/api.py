@@ -1,6 +1,6 @@
 from flask import request, Blueprint
 from app import log, app, data as dl, application as al
-import json, sys, html
+import json, inspect, html
 from functools import wraps
 from flask_login import login_user, logout_user
 
@@ -38,7 +38,7 @@ def api_core(api_level, func, *args, **kwargs):
         log.error(f'{func.__name__}: key not valid')
         return json.dumps({"status": False, "data": "key not valid"})
     except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return json.dumps({"status": False, "data": f"{html.escape(str(type(e)))}, {html.escape(str(e))}"})
 
 def level_1(func):
@@ -77,7 +77,7 @@ def registration_add(*args, **kwargs):
         elif item["to"] == "broadcast":
             al.socketio.broadcast_message(item)
         else:
-            log.error(f'{sys._getframe().f_code.co_name}: No valid "to" parameter: {item["to"]}')
+            log.error(f'{inspect.currentframe().f_code.co_name}: No valid "to" parameter: {item["to"]}')
             return json.dumps({"status": False, "data": f'No valid "to" parameter: {item["to"]}'})
     return json.dumps({"status": True})
 
