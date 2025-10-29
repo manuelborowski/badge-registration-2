@@ -12,8 +12,9 @@ from werkzeug.routing import IntegerConverter
 
 # 0.1 copy from stopwatch V0.28
 # 0.2: replaced sys._getframe() with inspect
+# 0.3: aesthetic updates
 
-version = "0.2"
+version = "0.3"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

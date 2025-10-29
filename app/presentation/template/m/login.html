@@ -22,21 +22,20 @@
 <main id="main">
 
     <div class="login-group">
-    <img src="/static/img/logo.png" alt="Stopwatch">
-        <h3>Aanmelden met Pin</h3>
-        <div class="login-container">
-            <form class="login-form" method="post">
-                <div class="form-group">
-                    <input type="text" id="login-pin" name="login-pin" placeholder="Pin aub" required>
-                </div>
-                <button class="btn-ok" type="submit">OK</button>
-            </form>
+        <img src="/static/img/logo.png" alt="Template">
+        <div {% if pin_enabled == False %} hidden {%  endif %}>
+            <div class="login-container">
+                <form class="login-form" method="post">
+                    <div class="form-group">
+                        <input type="text" id="login-pin" name="login-pin" placeholder="Pin aub" required>
+                    </div>
+                    <button class="btn-ok" type="submit">OK</button>
+                </form>
+            </div>
         </div>
-        <h2 style="margin-top:20px;">Of Smartschool</h2>
+        <br>
         <a href="{{ url_for('auth.login_ss') }}"><img src="static/img/btn_smartschool.png" alt="aanmelden via smartschool" style="width: 200px;margin-top:5px"></a>
     </div>
-
-
 </main>
 
 <footer><p class="copyright text-muted small">{{ version }}</p></footer>

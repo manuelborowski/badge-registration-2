@@ -49,7 +49,7 @@ def login():
                 else:
                     log.error(f'{inspect.currentframe().f_code.co_name}: Invalid pin')
                     message = {"status": "error", "data": "Ongeldige pin"}
-                    return render_template('m/login.html', message=message)
+                    return render_template('m/login.html', message=message, pin_enabled=app.config["MOBILE_PIN_ENABLE"])
             else:
                 user = dl.user.get (('username', "c=", request.form["username"])) # c= : case sensitive comparison
                 if user is not None and user.verify_password(request.form["password"]):
@@ -66,7 +66,7 @@ def login():
                     message = {"status": "error", "data": "Ongeldig(e) gebruikersnaam/wachtwoord"}
                     return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
         if user_agent.is_mobile:
-            return render_template('m/login.html')
+            return render_template('m/login.html', pin_enabled=app.config["MOBILE_PIN_ENABLE"])
         else:
             return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
     except Exception as e:
