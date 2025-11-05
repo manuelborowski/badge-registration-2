@@ -36,7 +36,7 @@ def login():
             if user_agent.is_mobile:
                 login_pin = request.form["login-pin"]
                 if secret_pin == login_pin:
-                    users = dl.user.get_m(("first_name", "=", "pinlogin"), order_by="last_login")
+                    users = dl.models.get_m(dl.user.User, ("first_name", "=", "pinlogin"), order_by="last_login")
                     user = users[0]
                     login_user(user)
                     log.info(f'user {user.username} logged in')
@@ -51,7 +51,7 @@ def login():
                     message = {"status": "error", "data": "Ongeldige pin"}
                     return render_template('m/login.html', message=message, pin_enabled=app.config["MOBILE_PIN_ENABLE"])
             else:
-                user = dl.user.get (('username', "c=", request.form["username"])) # c= : case sensitive comparison
+                user = dl.models.get(dl.user.User,('username', "c=", request.form["username"])) # c= : case sensitive comparison
                 if user is not None and user.verify_password(request.form["password"]):
                     login_user(user)
                     log.info(f'user {user.username} logged in')
@@ -101,7 +101,7 @@ def login_ss():
 
             if profile['basisrol'] in SMARTSCHOOL_ALLOWED_BASE_ROLES:
                 # Students are NOT allowed to log in
-                user = dl.user.get([('username', "c=" ,profile['username']), ('user_type', "=", dl.user.User.USER_TYPE.OAUTH)])
+                user = dl.models.get(dl.user.User,[('username', "c=" ,profile['username']), ('user_type', "=", dl.user.User.USER_TYPE.OAUTH)])
                 profile['last_login'] = datetime.datetime.now()
                 if user:
                     profile['first_name'] = profile['name']
@@ -141,7 +141,7 @@ def auto_login_generic():
     # remote server, generic auto login
     if "AUTO_LOGIN_URL" in app.config:
         if "AUTO_USER" in app.config:
-            user = dl.user.get (('username', "c=", app.config["AUTO_USER"])) # c= : case sensitive comparison
+            user = dl.models.get(dl.user.User,('username', "c=", app.config["AUTO_USER"])) # c= : case sensitive comparison
             login_user(user)
             log.info(u'user {} logged in'.format(user.username))
             user = dl.user.update(user, {"last_login": datetime.datetime.now()})

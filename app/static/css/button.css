@@ -1,10 +1,10 @@
-.button-menu-placeholder {
+.action-menu-placeholder {
     display: flex;
     justify-content: flex-start;
     width: 95%;
 }
 
-.button-menu-placeholder > button {
+.action-menu-placeholder > button {
     color: #fff;
     background-color: #f8c604;
     border-color: #f8c604;
@@ -15,20 +15,20 @@
     padding-bottom: 0;
     margin-right: 5px;
 }
-.button-menu-placeholder > * {
+.action-menu-placeholder > * {
     line-height: normal;
 }
 
-.button-menu-placeholder label {
+.action-menu-placeholder label {
     margin-bottom: 0;
     margin-right: 3px;
 }
 
-.button-menu-placeholder label input {
+.action-menu-placeholder label input {
     margin-left: 5px;
 }
 
-.button-menu-placeholder .align-right {
+.action-menu-placeholder .align-right {
     margin-left: auto;
 }
 

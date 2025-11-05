@@ -77,8 +77,9 @@ export const now_iso_string = () => {
 // On a webserver, if the service is restarted (sudo systemctl restart service-name), this can happen so fast that the client does not perceive it correctly,
 // i.e. the socketio is interrupted but it is not noticed by the catch or the 502.
 // Therefore, the hb returns a timestamp from the server, which is changed each time the server reboots.  If the client notices the timestamp has changed, it reloads.
+// At development time, when the server is restarted and the page is reloaded, avoid loading the page twice by setting skip_reload=true
 let popup_alert = null;
-export const check_server_alive = async () => {
+export const __check_server_alive_loop = async (skip_reload=false) => {
     try {
         const ret = await fetch(Flask.url_for('api.hb'), {signal: AbortSignal.timeout(2000)});
         if (ret.status in [502, 504]) throw new Error(); // server says: bad gateway
@@ -86,7 +87,7 @@ export const check_server_alive = async () => {
         if (localStorage.getItem("reboot") === "true" || localStorage.getItem("hb-timestamp") !== status.hb.toString()) {
             localStorage.setItem("reboot", "false");
             localStorage.setItem("hb-timestamp", status.hb);
-            location.reload();
+            if (!skip_reload) location.reload();
              if (popup_alert) {
                  popup_alert.hide();
                  popup_alert = null;
@@ -96,5 +97,9 @@ export const check_server_alive = async () => {
         localStorage.setItem("reboot", "true");
         if (!popup_alert) popup_alert = new AlertPopup("warning", "Systeem buiten dienst, even geduld aub...", 0);
     }
-    setTimeout(check_server_alive, 3000);
+    setTimeout(__check_server_alive_loop, 3000);
 };
+
+export const check_server_alive = async () => {
+    __check_server_alive_loop(true);
+}

@@ -1,0 +1,14 @@
+{% extends "datatables.html" %}
+{% block styles %}
+    {{ super() }}
+    <link href="static/css/form.css" rel="stylesheet">
+{% endblock %}
+{% block body %}
+    {{ super() }}
+    <div id="canvas"></div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="module" src="/static/js/project/overview.js"></script>
+{% endblock %}

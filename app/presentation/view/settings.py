@@ -16,16 +16,16 @@ log.addFilter(MyLogFilter())
 bp_settings = Blueprint('settings', __name__)
 
 @bp_settings.route('/settingsshow', methods=['GET'])
-@level_5_required
 @login_required
+@level_5_required
 def show():
     cron_module_enable_settings = dl.settings.get_configuration_setting('cron-enable-modules')
     return render_template('project/settings.html', data=[])
 
 
 @bp_settings.route('/setting', methods=['GET', 'UPDATE'])
-@level_5_required
 @login_required
+@level_5_required
 def setting():
     try:
         ret = {}
@@ -40,8 +40,8 @@ def setting():
         return fetch_return_error()
 
 @bp_settings.route('/button', methods=['POST'])
-@level_5_required
 @login_required
+@level_5_required
 def button():
     try:
         ret = {}
@@ -55,6 +55,7 @@ def button():
 
 @bp_settings.route('/setting/meta', methods=['GET'])
 @login_required
+@level_5_required
 def meta():
     user_level_label = dl.user.User.level_label
     user_level_option =[{"value": k, "label": v} for k, v in user_level_label.items()]

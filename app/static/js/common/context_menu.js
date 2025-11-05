@@ -1,4 +1,3 @@
-
 export class ContextMenu {
     item_ids = 0;
     get_ids_cb = null;
@@ -9,30 +8,6 @@ export class ContextMenu {
         this.context_placeholder.classList.add("context-menu-placeholder");
         this.menu = document.createElement("ul");
         this.context_placeholder.appendChild(this.menu);
-
-        // create menu
-        this.menu.innerHTML = "";
-        for (const mi of menu) {
-            if ("level" in mi && mi.level > current_user.level) continue; //skip entries when level of user is too low
-            const li = document.createElement("li");
-            this.menu.appendChild(li);
-            const span = document.createElement("span");
-            if(mi.type === "divider") {
-                span.innerHTML = "--------------";
-            } else if(mi.type === "text_input") {
-                const input = document.createElement("input");
-                span.appendChild(input);
-            } else {
-                li.onclick = () => this.item_clicked_with_cb(mi.cb);
-                if ("iconscout" in mi) {
-                    const i = document.createElement("i");
-                    i.classList.add("uil", `uil-${mi.iconscout}`);
-                    li.appendChild(i);
-                }
-                span.innerHTML = mi.label;
-            }
-            li.appendChild(span);
-        }
 
         // right-mouse-click in the active-area will open the context menu
         active_area.addEventListener("contextmenu", e => {
@@ -64,7 +39,33 @@ export class ContextMenu {
             document.querySelector("body").appendChild(this.context_placeholder);
             document.addEventListener("click", () => this.context_placeholder.remove());
         });
+        this.create_menu(menu);
+    }
 
+    create_menu = menu => {
+        // create menu
+        this.menu.innerHTML = "";
+        for (const mi of menu) {
+            if ("level" in mi && mi.level > current_user.level) continue; //skip entries when level of user is too low
+            const li = document.createElement("li");
+            this.menu.appendChild(li);
+            const span = document.createElement("span");
+            if (mi.type === "divider") {
+                span.innerHTML = "--------------";
+            } else if (mi.type === "text_input") {
+                const input = document.createElement("input");
+                span.appendChild(input);
+            } else {
+                li.onclick = () => this.item_clicked_with_cb(mi.cb);
+                if ("iconscout" in mi) {
+                    const i = document.createElement("i");
+                    i.classList.add("uil", `uil-${mi.iconscout}`);
+                    li.appendChild(i);
+                }
+                span.innerHTML = mi.label;
+            }
+            li.appendChild(span);
+        }
     }
 
     subscribe_get_ids = cb => this.get_ids_cb = cb;

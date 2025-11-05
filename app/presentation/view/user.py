@@ -12,18 +12,22 @@ log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 bp_user = Blueprint('user', __name__)
 
-@bp_user.route('/usershow', methods=['GET', 'POST'])
-@level_5_required
+@bp_user.route('/usershow', methods=['GET'])
 @login_required
+@level_5_required
 def show():
     return render_template("project/user.html", table_config=config.create_table_config())
 
-# invoked when the client requests data from the database
-al.socketio.subscribe_on_type("user-datatable-data", lambda type, data: datatable_get_data(config, data))
+@bp_user.route('/user/dt', methods=['POST'])
+@login_required
+@level_5_required
+def dt():
+    params = json.loads(request.data)
+    return datatable_get_data(config, params)
 
 @bp_user.route('/user', methods=["POST", "UPDATE", "DELETE", "GET"])
-@level_5_required
 @login_required
+@level_5_required
 def user(id=None):
     if request.method == "UPDATE":
         data = json.loads(request.data)
@@ -38,8 +42,8 @@ def user(id=None):
     return json.dumps(ret)
 
 @bp_user.route('/user/meta', methods=['GET'])
-@level_5_required
 @login_required
+@level_5_required
 def meta():
     user_level_label = dl.user.User.level_label
     user_level_option =[{"value": k, "label": v} for k, v in user_level_label.items()]
@@ -49,7 +53,6 @@ def meta():
         "option": {"level": user_level_option, "user_type": user_type_option},
         "default": {"level": 1, "user_type": dl.user.User.USER_TYPE.LOCAL},
     })
-
 
 class Config(DatatableConfig):
     def pre_sql_query(self):
@@ -71,8 +74,8 @@ class Config(DatatableConfig):
 config = Config("user", "Gebruikers")
 
 @bp_user.route('/usershowm', methods=['GET', 'POST'])
-@level_5_required
 @login_required
+@level_5_required
 def showm():
     return render_template("project/m/user.html")
 

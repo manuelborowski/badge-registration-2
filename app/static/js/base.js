@@ -1,4 +1,4 @@
-import {ButtonMenu} from "./common/button_menu.js";
+import {ActionMenu} from "./common/action_menu.js";
 import {menu} from "./project/menu.js";
 import {check_server_alive} from "./common/common.js";
 
@@ -6,8 +6,8 @@ export const inject_menu = new_menu => {
     menu = new_menu;
 }
 
-export const base_init = ({button_menu_items = []}) => {
-    check_server_alive();
+export const base_init = ({action_menu_items = []}) => {
+    if (enable_server_heartbeat) check_server_alive();
     if (suppress_navbar) return;
 
     const navbar_element = document.querySelector("#navbar");
@@ -38,7 +38,7 @@ export const base_init = ({button_menu_items = []}) => {
                         divd.classList.add("dropdown-divider");
                         div.appendChild(divd)
                     } else {
-                         if (current_user.level >= sitem_raw.userlevel) {
+                        if (current_user.level >= sitem_raw.userlevel) {
                             const sub_a = document.createElement("a");
                             div.appendChild(sub_a)
                             sub_a.classList.add("dropdown-item");
@@ -78,7 +78,19 @@ export const base_init = ({button_menu_items = []}) => {
             navbar_element.appendChild(li);
         }
     }
-    const button_menu = new ButtonMenu(document.querySelector(".button-menu-placeholder"), button_menu_items);
+    const button_menu = new ActionMenu(document.querySelector(".action-menu-placeholder"), action_menu_items);
+
+    if (logout_idle_time > 0) {
+        let idleTimer;
+        function reset_idle_timer() {
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {window.location.href = "/logout";}, logout_idle_time * 1000);
+        }
+        ["mousemove", "keydown", "scroll", "touchstart"].forEach(event => {
+            window.addEventListener(event, reset_idle_timer, true);
+        });
+        reset_idle_timer();
+    }
 }
 
 

@@ -8,6 +8,7 @@ const template =
         {
             type: "container", label: "Templates", save: true, default_collapsed: true, rows: [
                 {label: "Gebruikers", name: "user-datatables-template", type: "textarea"},
+                {label: "Studenten", name: "student-datatables-template", type: "textarea"},
             ]
         },
         {
@@ -28,11 +29,21 @@ const template =
                     ]
                 },
                 {
+                    type: "container", label: "Locaties", save: true, default_collapsed: true, rows: [
+                        {label: "Locaties (YAML)", name: "location-profiles", type: "textarea"},
+                        {label: "Artikelen (YAML)", name: "artikel-profiles", type: "textarea"},
+                    ]
+                },
+                {
                     type: "container", label: "API keys", save: true, default_collapsed: true, rows: [
                         {label: "YAML", name: "api-keys", type: "textarea"},
                     ]
                 },
                 {
+                    type: "container", label: "Logging", save: true, default_collapsed: true, rows: [
+                        {label: "YAML", name: "logging-inform-emails", type: "textarea"},
+                    ]
+                },                {
                     type: "container", label: "Mobiele scanner", save: true, default_collapsed: true, rows: [
                         {label: "Pin", name: "mobile-login-pin", type: "input"},
                     ]

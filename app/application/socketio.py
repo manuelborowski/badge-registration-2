@@ -23,10 +23,8 @@ def close_room(message):
 @socketio.event
 def send_to_server(msg):
     if msg['type'] in socketio_cbs:
-        if 'value' in msg['data'] and msg['data']['value'] == 'on': # bugfix socketio?  Sometimes, a True at the sender becomes 'on' at the receiver
-            msg['data']['value'] = True
         for cb in socketio_cbs[msg['type']]:
-            cb(msg["type"], msg["data"])
+            cb(msg, request.sid)
 
 @socketio.on('disconnect')
 def disconnect_socket():

@@ -92,28 +92,22 @@ class User(UserMixin, db.Model, SerializerMixin):
     def log(self):
         return '<User: {}/{}>'.format(self.id, self.username)
 
-def commit():
-    return app.data.models.commit()
-
-def add(data = {}):
+def add(data=None):
+    if data is None:
+        data = {}
     if 'password' in data:
         data['password_hash'] = generate_password_hash(data['password'])
-    return dl.models.add_single(User, data)
+    return dl.models.add(User, data)
 
-def update(user, data={}):
+def update(user, data=None):
+    if data is None:
+        data = {}
     if 'password' in data:
         data['password_hash'] = generate_password_hash(data['password'])
-    return dl.models.update_single(User, user, data)
-
-def get_m(filters=[], fields=[], order_by=None, first=False, count=False, active=True):
-    return dl.models.get_multiple(User, filters=filters, fields=fields, order_by=order_by, first=first, count=count, active=active)
-
-def get(filters=[]):
-    return dl.models.get_first_single(User, filters)
+    return dl.models.update(User, user, data)
 
 def delete(ids=None):
-    return dl.models.delete_multiple(User, ids=ids)
-
+    return dl.models.delete_m(User, ids=ids)
 
 ############ user overview list #########
 def filter(query_in):
@@ -128,10 +122,8 @@ def load_user(user_id):
     user = User.query.get(int(user_id))
     return user
 
-
 def pre_sql_query():
     return db.session.query(User)
-
 
 def pre_sql_filter(query, filters):
     for f in filters:
@@ -142,7 +134,6 @@ def pre_sql_filter(query, filters):
             if f['value'] != 'all':
                 query = query.filter(User.level == f['value'])
     return query
-
 
 def pre_sql_search(search_string):
     search_constraints = []

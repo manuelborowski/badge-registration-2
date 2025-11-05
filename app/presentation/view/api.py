@@ -7,7 +7,7 @@ from flask_login import login_user, logout_user
 bp_api = Blueprint('api', __name__)
 
 with app.app_context():
-    user_api = dl.user.get(("username", "=", "api"))
+    user_api = dl.models.get(dl.user.User,("username", "=", "api"))
 
 def api_core(api_level, func, *args, **kwargs):
     try:

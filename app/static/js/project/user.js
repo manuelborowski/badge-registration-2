@@ -22,7 +22,6 @@ const template =
         }
     ]
 
-
 const __user_add_or_update = async (ids, add = true) => {
     const users = add ? null : await fetch_get("user.user", {filters: `id$=$${ids[0]}`})
     const bform = new BForms(template);

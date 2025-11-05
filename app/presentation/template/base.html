@@ -42,7 +42,7 @@
 
     </div>
     <div>
-        <div class="button-menu-placeholder"></div>
+        <div class="action-menu-placeholder"></div>
     </div>
     <div>
         <div class="filter-menu-placeholder"></div>
@@ -76,6 +76,8 @@
     <script>
         const current_user = {level: {{(current_user.level or null)|tojson}}, username: {{(current_user.username or null)|tojson }}};
         const suppress_navbar = {{ (suppress_navbar or False)|tojson}};
+        const enable_server_heartbeat = {{ (enable_server_heartbeat or False)|tojson}};
+        const logout_idle_time = {{ (logout_idle_time or 0)|tojson}};
     </script>
     <script type="module">
         import {socketio} from "../../static/js/common/socketio.js";

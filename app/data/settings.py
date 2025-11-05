@@ -1,7 +1,13 @@
-from app import log, db
+from app import db
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy_serializer import SerializerMixin
 import json, yaml, re, inspect
+
+#logging on file level
+import logging
+from app import MyLogFilter, top_log_handle
+log = logging.getLogger(f"{top_log_handle}.{__name__}")
+log.addFilter(MyLogFilter())
 
 class Settings(db.Model, SerializerMixin):
     __tablename__ = 'settings'
@@ -87,9 +93,17 @@ default_configuration_settings = {
     'mobile-login-pin': ('', Settings.SETTING_TYPE.E_STRING),
 
     'user-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
+    'student-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
 
     'cron-scheduler-template': ('', Settings.SETTING_TYPE.E_STRING),
     'cron-enable-modules': ({}, Settings.SETTING_TYPE.E_JSON),
+
+    'logging-inform-emails': ({}, Settings.SETTING_TYPE.E_YAML),
+
+    'api-keys': ({}, Settings.SETTING_TYPE.E_YAML),
+
+    'location-profiles': ({}, Settings.SETTING_TYPE.E_YAML),
+    'artikel-profiles': ({}, Settings.SETTING_TYPE.E_YAML),
 }
 
 def get_configuration_settings(convert_to_string=False):

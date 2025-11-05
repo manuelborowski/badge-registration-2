@@ -80,17 +80,16 @@ export class FilterMenu {
             button.classList.add("btn", "btn-danger");
             button.type = "button";
             button.innerHTML = "Reset";
+            button.style.marginRight = "10px";
             button.addEventListener("click", () => {
-                localStorage.clear(`Filter-${this.id}`);
+                localStorage.removeItem(`Filter-${this.id}`);
                 let url = location.href.split("?")[0]; // remove trailing arguments
                 location.replace(url);
             });
             placeholder.style.display = "flex";
 
-            // second stage, iterate over the filters and set the value of the filter.  This will trigger the
-            // "source" filters to add their options.
-            // Skip filters of type "source" because the options of these are set when the corresponding source filter
-            // has its value set.
+            // second stage, iterate over the filters and set the value of the filter.  This will trigger the "source" filters to add their options.
+            // Skip filters of type "source" because the options of these are set when the corresponding source filter has its value set.
             for (const item of menu) {
                 if (!("source" in item)) {
                     const default_value = this.filter_cache[item.id];
@@ -113,7 +112,7 @@ export class FilterMenu {
                 const source_value = this.filter_cache[source_id];
                 options = options[source_value];
             }
-            if (options === undefined || options.length ===0) continue
+            if (options === undefined || options.length === 0) continue
             // Use the stored (cached) value only if it has a valid value (is in the options list), else use the first option as default
             const cache_value = this.filter_cache[id];
             let default_value = options[0].value;

@@ -8,10 +8,9 @@ from app import MyLogFilter, top_log_handle
 log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 
-
 def add(data):
     try:
-        user = dl.user.get(('username', "=", data['username']))
+        user = dl.models.get(dl.user.User, ('username', "=", data['username']))
         if user:
             log.error(f'Error, user {user.username} already exists')
             return {"status": "warning", "msg": f'Fout, gebruiker "{user.username}" bestaat al'}
@@ -23,14 +22,13 @@ def add(data):
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": str(e)}
 
-
 def update(data):
     try:
         if "id" in data:
-            user = dl.user.get(('id', "=", data['id']))
+            user = dl.models.get(dl.user.User, ('id', "=", data['id']))
             del data['id']
         elif "username" in data:
-            user = dl.user.get(('username', "=", data['username']))
+            user = dl.models.get(dl.user.User, ('username', "=", data['username']))
             del data['username']
         else:
             user = None
@@ -52,12 +50,11 @@ def update(data):
 
 def delete(ids):
     try:
-        dl.user.delete(ids)
+        dl.models.delete_m(dl.user.User, ids)
         return {"status": "ok", "msg": "Gebruikers zijn verwijderd"}
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": str(e)}
-
 
 def get(data):
     try:
@@ -67,7 +64,7 @@ def get(data):
         if "rfid" in data:
             filter = ("rfid", "=", data['rfid'])
         if filter:
-            user = dl.user.get(filter)
+            user = dl.models.get(dl.user.User, filter)
             if user:
                 return {"data": user.to_dict()}
             else:

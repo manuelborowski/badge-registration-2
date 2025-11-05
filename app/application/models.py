@@ -15,7 +15,7 @@ filter_operators = ["$=$", "$!$", "$>$", "$<$", "$>=$", "$<=$", "$l$"]
 # filters are applied on the database query; only entries where the given key matches the entry-property will be returned.
 # A key (e.g. voornaam) preceded with a '-' will return entries where the key does not match the entry-property.
 # start and stop (if not none) indicate the slice that needs to be taken from the data
-def __process_options(options):
+def process_options(options):
     try:
         fields = options['fields'].split(',') if 'fields' in options else []
         filters = []
@@ -42,8 +42,8 @@ def __process_options(options):
 # options is a string with fields and filters (see above)
 def get(model, options=None):
     try:
-        fields, filters, order_by, start, stop = __process_options(options)
-        items = mmodels.get_multiple(model, filters=filters, fields=fields, order_by=order_by, start=start, stop=stop)
+        fields, filters, order_by, start, stop = process_options(options)
+        items = mmodels.get_m(model, filters=filters, fields=fields, order_by=order_by, start=start, stop=stop)
         if fields:
             # if only a limited number of properties is required, it is possible that some properties must be converted to a string (e.g. datetime and date) because these cannot be
             # serialized to json

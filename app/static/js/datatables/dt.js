@@ -1,7 +1,7 @@
 import {return_render_ellipsis} from "./ellipsis.js";
 import {socketio} from "../common/socketio.js";
 import {AlertPopup} from "../common/popup.js";
-import {busy_indication_off, busy_indication_on} from "../common/common.js";
+import {busy_indication_off, busy_indication_on, fetch_post} from "../common/common.js";
 import {base_init} from "../base.js";
 import {ContextMenu} from "../common/context_menu.js";
 import {FilterMenu} from "../common/filter_menu.js";
@@ -9,7 +9,7 @@ import {CellEdit} from "./cell_edit.js";
 import {ColumnVisibility} from "../common/column_visibility.js";
 
 export let datatable_column2index = {};
-export let ctx = null;
+export let ctx = {table: null};
 
 //If not exactly one checkbox is selected, display warning and return false, else return true
 function checkbox_is_exactly_one_selected() {
@@ -84,14 +84,40 @@ const __filter_changed_cb = (id, value) => {
     if (ctx.server_side) datatable_reload_table();
 }
 
-export const datatables_init = ({context_menu_items = [], filter_menu_items = [], button_menu_items = [], callbacks = {}, initial_data = null}) => {
-    ctx = {table_config, reload_table: datatable_reload_table}
-    ctx.cell_to_color = "color_keys" in table_config ? table_config.cell_color.color_keys : null;
-    ctx.suppress_cell_content = "color_keys" in table_config ? table_config.cell_color.supress_cell_content : null;
+export const datatables_init = ({config = null, context_menu_items = [], filter_menu_items = [], action_menu_items = [], callbacks = {}, initial_data = null}) => {
+    // If a table already exist, remove it
+    if (ctx.table) {
+        ctx.table.destroy();
+        $('#datatable').empty();
+    }
+    config = config || table_config; // default, use config via view -> render_template(...) or overwrite from caller
+    ctx.config = config;
+    const table = document.createElement("table");
+    table.id = "datatable";
+    const th = document.createElement("thead");
+    table.appendChild(th);
+    const tr = document.createElement("tr");
+    th.appendChild(tr);
+    ctx.config.template.forEach(i => {
+        const th = document.createElement("th");
+        tr.appendChild(th);
+        if (i.name === "row_action") {
+            const input = document.createElement("input");
+            th.appendChild(input);
+            input.type = "checkbox";
+            input.id = "select_all";
+        } else {
+            th.innerHTML = i.name;
+        }
+    });
+    document.querySelector(".container-fluid").innerHTML = "";
+    document.querySelector(".container-fluid").appendChild(table);
+    ctx.cell_to_color = "color_keys" in ctx.config ? ctx.config.cell_color.color_keys : null;
+    ctx.suppress_cell_content = "color_keys" in ctx.config ? ctx.config.cell_color.supress_cell_content : null;
 
     ctx.context_menu = new ContextMenu(document.querySelector("#datatable"), context_menu_items);
     ctx.context_menu.subscribe_get_ids(mouse_get_ids);
-    ctx.filter_menu = new FilterMenu(document.querySelector(".filter-menu-placeholder"), filter_menu_items, __filter_changed_cb, ctx.table_config.view);
+    ctx.filter_menu = new FilterMenu(document.querySelector(".filter-menu-placeholder"), filter_menu_items, __filter_changed_cb, ctx.config.view);
 
     ctx.server_side = initial_data === null; // Get data from te server
 
@@ -116,7 +142,7 @@ export const datatables_init = ({context_menu_items = [], filter_menu_items = []
     );
 
     // check special options in the columns
-    $.each(ctx.table_config.template, function (i, v) {
+    $.each(ctx.config.template, function (i, v) {
         //ellipsis
         if ("ellipsis" in v) v.render = return_render_ellipsis(v.ellipsis.cutoff, v.ellipsis.wordbreak, true);
         if ("bool" in v) v.render = function (data, type, full, meta) {return data === true ? "&#10003;" : "";};
@@ -155,20 +181,12 @@ export const datatables_init = ({context_menu_items = [], filter_menu_items = []
         datatable_column2index[v.data] = i;
     });
 
-    // get data from server and send to datatables to render it
-    let __datatable_data_cb = null;
-    const data_from_server = (type, data) => {
-        busy_indication_off();
-        __datatable_data_cb(data);
-    }
-    socketio.subscribe_on_receive(`${ctx.table_config.view}-datatable-data`, data_from_server);
-
     let datatable_config = {
         autoWidth: false,
         stateSave: true,
         stateDuration: 0,
         pagingType: "full_numbers",
-        columns: ctx.table_config.template,
+        columns: ctx.config.template,
         language: {url: "static/datatables/dutch.json"},
         layout: {
             topStart: ["pageLength", "paging", "info"],
@@ -217,16 +235,23 @@ export const datatables_init = ({context_menu_items = [], filter_menu_items = []
             if (callbacks.table_loaded) callbacks.table_loaded();
         },
         initComplete: function () {
-            new ColumnVisibility(document.querySelector('.column-visible-placeholder'), table_config.template, (column, visible) => ctx.table.column(column).visible(visible), table_config.view);
+            new ColumnVisibility(document.querySelector('.column-visible-placeholder'), ctx.config.template, (column, visible) => ctx.table.column(column).visible(visible), ctx.config.view);
+            if ("width" in ctx.config) {
+                const dt_container = document.querySelector("div.dt-container")
+                dt_container.style.width = ctx.config.width;
+                dt_container.style.marginLeft = "auto";
+                dt_container.style.marginRight = "auto";
+            }
         },
     }
 
     if (ctx.server_side) {
-        datatable_config.ajax = function (data, cb, settings) {
+        datatable_config.ajax = async function (data, cb, settings) {
             busy_indication_on();
             let filters = ctx.filter_menu.filters;
-            socketio.send_to_server(`${ctx.table_config.view}-datatable-data`, $.extend({}, data, {filters}));
-            __datatable_data_cb = cb;
+            const ret = await fetch_post(`${ctx.config.view}.dt`, $.extend({}, data, {filters}));
+            busy_indication_off();
+            cb(ret);
         };
         datatable_config.serverSide = true;
     } else {
@@ -234,12 +259,8 @@ export const datatables_init = ({context_menu_items = [], filter_menu_items = []
         datatable_config.data = initial_data;
     }
 
-    if ("default_order" in table_config) {
-        datatable_config["order"] = [[table_config.default_order[0], table_config.default_order[1]]];
-    }
-
-    if ("width" in table_config) {
-        $("#datatable").attr("width", table_config.width);
+    if ("default_order" in ctx.config) {
+        datatable_config["order"] = [[ctx.config.default_order[0], ctx.config.default_order[1]]];
     }
 
     DataTable.type('num', 'className', 'dt-left');
@@ -255,10 +276,10 @@ export const datatables_init = ({context_menu_items = [], filter_menu_items = []
         ctx.table.draw();
     });
 
-    const update_cell_changed = data => {socketio.send_to_server(`${ctx.table_config.view}-cell-update`, data);}
+    const update_cell_changed = data => {socketio.send_to_server(`${ctx.config.view}-cell-update`, data);}
 
     const __cell_edit_changed_cb = ($dt_row, column_index, new_value, old_value) => {
-        const value = ctx.table_config.template[column_index].celledit.value_type === 'int' ? parseInt(new_value) : new_value;
+        const value = ctx.config.template[column_index].celledit.value_type === 'int' ? parseInt(new_value) : new_value;
         const column_name = ctx.table.column(column_index).dataSrc()
         update_cell_changed({id: $dt_row.data().DT_RowId, column: column_name, value});
     }
@@ -272,79 +293,13 @@ export const datatables_init = ({context_menu_items = [], filter_menu_items = []
         update_cell_changed(data);
     }
 
-    const cell_edit = new CellEdit(ctx.table, table_config.template, __cell_edit_changed_cb);
-
-    if ("row_detail" in table_config) {
-        //For an extra-measure, show the associated remarks as a sub-table
-        let d_table_start = '<table cellpadding="5" cellspacing="0" border="2" style="padding-left:50px;">'
-        let d_table_stop = '</table>'
-        let d_header = '<tr><td>Datum</td><td>Leerling</td><td>LKR</td><td>KL</td><td>Les</td><td>Opmerking</td><td>Maatregel</td></tr>'
-
-        function format_row_detail(data) {
-            let s = d_table_start;
-            s += d_header;
-            if (data) {
-                for (let i = 0; i < data.length; i++) {
-                    s += '<tr>'
-                    s = s + '<td>' + data[i].date + '</td>';
-                    s = s + '<td>' + data[i].student.full_name + '</td>';
-                    s = s + '<td>' + data[i].teacher.code + '</td>';
-                    s = s + '<td>' + data[i].grade.code + '</td>';
-                    s = s + '<td>' + data[i].lesson.code + '</td>';
-                    s = s + '<td>' + data[i].subjects + '</td>';
-                    s = s + '<td>' + data[i].measures + '</td>';
-                    s += '</tr>'
-                }
-                s += d_table_stop;
-                return s;
-            }
-            return 'Geen gegevens';
-        }
-
-        // Array to track the ids of the details displayed rows
-        let detail_rows_cache = [];
-
-        $('#datatable tbody').on('click', 'tr td.details-control', function () {
-            let tr = $(this).closest('tr');
-            let row = ctx.table.row(tr);
-            let idx = $.inArray(tr.attr('DT_RowId'), detail_rows_cache);
-
-            if (row.child.isShown()) {
-                tr.removeClass('details');
-                row.child.hide();
-                detail_rows_cache.splice(idx, 1);
-            } else {
-                let tx_data = {"id": row.data().DT_RowId};
-                $.getJSON(Flask.url_for('reviewed.get_row_detail', {'data': JSON.stringify(tx_data)}), function (rx_data) {
-                    if (rx_data.status) {
-                        row.child(format_row_detail(rx_data.details)).show();
-                        tr.addClass('details');
-                        if (idx === -1) {
-                            detail_rows_cache.push(tr.attr('DT_RowId'));
-                        }
-                    } else {
-                        bootbox.alert('Fout: kan details niet ophalen');
-                    }
-                });
-            }
-        });
-    }
-
-    if ("row_detail" in table_config) {
-        //This function is called, each time the table is drawn
-        ctx.table.on('draw', function () {
-            //Row details
-            $.each(detail_rows_cache, function (i, id) {
-                $('#' + id + ' td.details-control').trigger('click');
-            });
-        });
-    }
+    const cell_edit = new CellEdit(ctx.table, ctx.config.template, __cell_edit_changed_cb);
 
     //checkbox in header is clicked
     $("#select_all").change(function () {
         $(".chbx_all").prop('checked', this.checked);
     });
-    base_init({button_menu_items});
+    base_init({action_menu_items});
     return ctx
 }
 

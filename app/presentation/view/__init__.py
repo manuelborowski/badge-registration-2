@@ -15,7 +15,9 @@ log.addFilter(MyLogFilter())
 
 @app.context_processor
 def inject_defaults():
-    return dict(version=f'@ 2025 MB. {version}', title=app.config['TITLE'], current_user=current_user)
+    logout_idle_time = app.config["LOGOUT_IDLE_TIME"] if "LOGOUT_IDLE_TIME" in app.config else 0
+    return dict(version=f'@ 2025 MB. {version}', title=app.config['TITLE'], current_user=current_user, enable_server_heartbeat=app.config["RUN_MODE"] == "production",
+                logout_idle_time=logout_idle_time)
 
 def send_alert_to_client(status, msg):
     al.socketio.send_to_client({"type": "alert-popup", "data": {"data": msg, "status": status}})
@@ -24,11 +26,9 @@ def send_alert_to_client(status, msg):
 def datatable_get_data(table_config, data):
     ret = al.datatables.datatable_get_data(table_config, data)
     if ret["status"]:
-        al.socketio.send_to_client({"type": f"{table_config.view}-datatable-data", "data": ret["data"]})
         return json.dumps(ret["data"])
     else:
-        send_alert_to_client("error", ret["data"])
-        return "[]"
+        return json.dumps({"status": "error", "msg": ret["data"]})
 
 # use only in context of a fetch call
 def fetch_return_error(msg=None):

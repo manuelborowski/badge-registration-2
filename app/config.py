@@ -1,6 +1,5 @@
 DB_TOOLS = False
 
-
 class Config(object):
     STATIC_PATH = "app/static"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -12,10 +11,8 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = False
     SOCKETIO_ASYNC_MODE = None
 
-
 class ProductionConfig(Config):
     DEBUG = False
-
 
 app_config = {
     'development': DevelopmentConfig,

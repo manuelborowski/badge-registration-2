@@ -7,6 +7,7 @@ from flask_jsglue import JSGlue
 from flask_migrate import Migrate
 from flask_apscheduler import APScheduler
 from werkzeug.routing import IntegerConverter
+from typing import Callable
 
 #Warning: update flask_jsglue.py: from markupsafe import Markup
 
@@ -24,6 +25,7 @@ config_name = os.getenv('FLASK_CONFIG')
 config_name = config_name if config_name else 'production'
 app.config.from_object(app_config[config_name])
 app.config.from_pyfile('config.py')
+app.config["RUN_MODE"] = config_name
 
 #  enable logging
 top_log_handle =  app.config["TITLE"].upper()
@@ -41,6 +43,33 @@ log_handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=1024 *
 log_formatter = logging.Formatter(u'%(asctime)s - %(levelname)s - %(username)s - %(message)s')
 log_handler.setFormatter(log_formatter)
 log.addHandler(log_handler)
+
+# if the log-error-message is FLUSH-TO-EMAIL, all error logs are emailed and the buffer is cleared.
+email_log_handler: Callable
+
+
+def subscribe_email_log_handler_cb(cb):
+    global email_log_handler
+    email_log_handler = cb
+
+class MyBufferingHandler(logging.handlers.BufferingHandler):
+    def flush(self):
+        if len(self.buffer) > 1:
+            message_body = ""
+            for b in self.buffer:
+                message_body += self.format(b) + "<br>"
+            with app.app_context():
+                if email_log_handler:
+                    email_log_handler(message_body)
+        self.buffer = []
+
+    def shouldFlush(self, record):
+        return record.msg == "FLUSH-TO-EMAIL"
+
+buf_handler = MyBufferingHandler(2)
+buf_handler.setLevel("ERROR")
+log.addHandler(buf_handler)
+buf_handler.setFormatter(log_formatter)
 
 log.info(f"START {app.config["TITLE"]}")
 
@@ -83,9 +112,11 @@ ap_scheduler.init_app(app)
 ap_scheduler.start()
 
 # Should be last to avoid circular import
-from app.presentation.view import auth, api, user, settings
+from app.presentation.view import auth, api, user, settings, overview, student
 app.register_blueprint(auth.bp_auth)
 app.register_blueprint(api.bp_api)
 app.register_blueprint(user.bp_user)
 app.register_blueprint(settings.bp_settings)
+app.register_blueprint(overview.bp_overview)
+app.register_blueprint(student.bp_student)
 
