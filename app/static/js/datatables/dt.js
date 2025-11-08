@@ -76,6 +76,10 @@ export function datatable_table_add(table) {
     ctx.table.clear().rows.add(table).draw();
 }
 
+export function datatable_remove_table() {
+    document.querySelector(".container-fluid").innerHTML = "";
+}
+
 export function datatable_reload_table() {
     ctx.table.ajax.reload();
 }
@@ -90,7 +94,7 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         ctx.table.destroy();
         $('#datatable').empty();
     }
-    config = config || table_config; // default, use config via view -> render_template(...) or overwrite from caller
+    config = config || table_config; // default, use config via server -> view -> render_template(...) or overwrite from caller
     ctx.config = config;
     const table = document.createElement("table");
     table.id = "datatable";
@@ -141,12 +145,32 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         $('<tfoot/>').append($("#datatable thead tr").clone())
     );
 
-    // check special options in the columns
-    $.each(ctx.config.template, function (i, v) {
-        //ellipsis
-        if ("ellipsis" in v) v.render = return_render_ellipsis(v.ellipsis.cutoff, v.ellipsis.wordbreak, true);
-        if ("bool" in v) v.render = function (data, type, full, meta) {return data === true ? "&#10003;" : "";};
-        if ("label" in v) v.render = function (data, type, full, meta) {return v.label.labels[data];}
+    const render_display = (data, typen, full, meta, v) => {
+        let values = [];
+        let color = null;
+        for (const f of v.fields) {
+            let value = full[f.field];
+            if ("colors" in f) color = f.colors[value];
+            if ("labels" in f) value = f.labels[value];
+            if ("bool" in f) value = value === true ? "&#10003;" : "";
+            values.push(value);
+        }
+        var template = values[0];
+        if ("template" in v) {
+            template = v.template;
+            for (let i = 0; i < values.length; i++) template = template.replaceAll(`%${i}%`, values[i]);
+        }
+        if (color) {
+            return `<div style="background:${color};">${template}</div>`
+        } else {
+            return template
+        }
+    }
+
+    const render = (v) => {
+        if ("ellipsis" in v) return_render_ellipsis(v.ellipsis.cutoff, v.ellipsis.wordbreak, true);
+        if ("bool" in v) return (data, type, full, meta) => data === true ? "&#10003;" : "";
+        if ("label" in v) return (data, type, full, meta) => v.label.labels[data]
         if ("color" in v) {
             const render = "render" in v ? v.render : null;
             v.render = function (data, type, full, meta) {
@@ -154,32 +178,16 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
                 return `<div style="background:${v.color.colors[ctx.table.cell(meta.row, meta.col).data()]};">${data}</div>`
             }
         }
-        if ("less" in v) v.render = function (data, type, full, meta) {return data < v.less.than ? ("then" in v.less ? v.less.then : data) : ("else" in v.less ? v.less.else : data);}
-        if ("display" in v) {
-            v.render = function (data, typen, full, meta) {
-                let values = [];
-                let color = null;
-                for (const f of v.display.fields) {
-                    let value = full[f.field];
-                    if ("labels" in f) value = f.labels[value];
-                    if ("colors" in f) color = f.colors[value];
-                    if ("bool" in f) value = value === true ? "&#10003;" : "";
-                    values.push(value);
-                }
-                var template = values[0];
-                if ("template" in v.display) {
-                    template = v.display.template;
-                    for (let i = 0; i < values.length; i++) template = template.replace(`%${i}%`, values[i]);
-                }
-                if (color) {
-                    return `<div style="background:${color};">${template}</div>`
-                } else {
-                    return template
-                }
-            }
-        }
+        if ("less" in v) return (data, type, full, meta) => data < v.less.than ? ("then" in v.less ? v.less.then : data) : ("else" in v.less ? v.less.else : data)
+        if ("display" in v) return (data, type, full, meta) => render_display(data, type, full, meta, v.display);
+        if ("equal" in v) return (data, type, full, meta) => data === v.equal.to ? render_display(data, type, full, meta, v.equal.then) : render_display(data, type, full, meta, v.equal.else);
+    };
+
+    // check special options in the columns
+    $.each(ctx.config.template, (i, v) => {
+        v.render = render(v);
         datatable_column2index[v.data] = i;
-    });
+    })
 
     let datatable_config = {
         autoWidth: false,
@@ -218,6 +226,10 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
                         row.cells[column_shifter[column]].innerHTML = select[row.cells[column_shifter[column]].innerHTML];
                     }
                 }
+            }
+            if (ctx.config.row_callback) {
+                const res = ctx.config.row_callback(data, row);
+                if (res) res.forEach(c => row.cells[c.index].innerHTML = c.value);
             }
         },
         preDrawCallback: function (settings) {

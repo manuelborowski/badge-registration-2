@@ -2,9 +2,10 @@
 // the popup disappears after a delay (5s) or when clicked next to the popup
 export class AlertPopup {
     timer_id = null;
-    constructor(status = "ok", msg, delay = 5000) {
+    constructor(status = "ok", msg, delay = 1000) {
         if (window["bootbox"]) {
             if (this.timer_id !== null) clearTimeout(timer.timer_id);
+            delay = delay > 0 && ["warning", "error"].includes(status) ? 5000 : delay;
             if (delay > 0) this.timer_id = setTimeout(() => this.dialog.modal("hide"), delay);
             this.dialog = bootbox.dialog({
                 size: "large",

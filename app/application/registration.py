@@ -1,4 +1,4 @@
-import datetime, inspect, base64, requests, io, pandas as pd
+import datetime, inspect, base64, requests, io, pandas as pd, json
 import app.application
 from app import app, data as dl, application as al
 from app.application.smartschool import send_message as ss_send_message
@@ -126,22 +126,6 @@ def registration_add(params):
         if student:
             photo_obj = get(Photo, ("id", "=", student.foto_id))
             photo = base64.b64encode(photo_obj.photo).decode('utf-8') if photo_obj else ''
-            log.info(f'{inspect.currentframe().f_code.co_name}:  Add registration for {student.leerlingnummer}, {student.naam} {student.voornaam} {location_key}')
-            ret_location = {'type': 'update-list-of-registrations', "data": {"action": "add", "data": [{"student": student.to_dict(), "photo": photo}]}}
-
-            if location["type"] == "nietverplicht":
-                registrations = get_m(Registration, [("leerlingnummer", "=", student.leerlingnummer), ("location", "=", location_key), ("time_in", ">", today)], order_by="id")
-                if registrations:
-                    last_registration = registrations[-1]
-                    if last_registration.time_out is None:
-                        update(Registration, last_registration, {"time_out": now})
-                        log.info(f'{inspect.currentframe().f_code.co_name}: Badge out, {student.leerlingnummer} at {now}')
-                        return {'type': 'update-list-of-registrations', 'data': {"status": True, "action": "delete", "data": [{"id": last_registration.id}]}}
-                registration = add(Registration, {"leerlingnummer": student.leerlingnummer, "location": location_key, "time_in": now})
-                if registration:
-                    log.info(f'{inspect.currentframe().f_code.co_name}: Badge in, {student.leerlingnummer} at {now}')
-                    ret_location["data"][0].update({"timestamp": str(registration.time_in), "id": registration.id, })
-                    return {'type': 'update-list-of-registrations', 'data': ret_location}
             if location["type"] == "verkoop":
                 artikel = get_configuration_setting("artikel-profiles")[location["artikel"]]
                 nbr_items = 1
@@ -157,65 +141,37 @@ def registration_add(params):
                     current_qty = int(mask[day_index + 6])
                     if current_qty >= max_qty:
                         log.info(f'{inspect.currentframe().f_code.co_name}:  {student.leerlingnummer}, dagmasker, exceeded quantity {current_qty}/{max_qty} ')
-                        return [{"to": "ip", 'type': 'alert-popup', "data": f"Student {student.naam} {student.voornaam} heeft het maximum aantal van {max_qty} artikel(s) bereikt"}]
+                        return {"status": "ok", "msg": f"Student {student.naam} {student.voornaam} heeft het maximum aantal van {max_qty} artikel(s) bereikt"}
                     current_qty += 1
                     mask = mask[:day_index + 6] + str(current_qty) + mask[day_index + 7:]
                     update(Student, student, {location["dagmasker"]: mask})
-                registration = add(Registration, {"person_id": student.leerlingnummer, "location": location_key, "time_in": now, "prijs_per_item": artikel["prijs-per-item"], "aantal_items": nbr_items, "person_type": "student"})
-                if registration:
-                    log.info(f'{inspect.currentframe().f_code.co_name}: Verkoop({location["locatie"]}), {student.leerlingnummer} at {now}, price-per-item {artikel["prijs-per-item"]}, nbr items {nbr_items}')
-
-
-                    ret_location["data"]["data"][0].update({"registration": registration.to_dict()})
-                    al.socketio.send_to_room(ret_location["data"], location_key)
-                    return {"status": "ok", "msg": f"student {student.naam} {student.voornaam} heeft gescand om {registration.time_in}"}
-
-                    return [ret_location, ret_ip]
-
+                registration = add(Registration, {"person_id": student.leerlingnummer, "location": location_key, "time_in": now, "prijs_per_item": artikel["prijs-per-item"], "aantal_items": nbr_items})
             # When a student is too late in, scan its badge.  An sms is sent to the parents and a why-too-late reason needs to be added
             # If the student returns with a valid proof of being late, tick the registration as being acknowledged/finished
             # text1: remark
-            # flag1: remark is acknowledged
-            # flag2: sms is sent
-            if location["type"] == "sms":
-                registration = add(Registration, {"leerlingnummer": student.leerlingnummer, "location": location_key, "time_in": now})
-                if registration:
-                    sms_sent = False
-                    if "auto" in location and location["auto"]:  # send sms when badge is scanned
-                        sms_sent = __send_sms(registration, location, student)
-                    auto_remark = location["auto_remark"] if "auto_remark" in location else False
-                    ret_location["data"]["data"][0].update({"id": registration.id, "remark": "", "remark_ack": False, "sms_sent": sms_sent, "auto_remark": auto_remark})
-                    return [ret_location, ret_ip]
-            # When a student needs to hand in its cellphone, its badge is scanned.
+            # flag1: sms is sent
+            # flag2: remark is acknowledged
+
+            # When a student needs to hand in its cellphone or needs to go to the toilet during lesson time, its badge is scanned.
             # Depending on the number of times, a rule is invoked to color the scan and/or send smartschool messages
             # aantal_items: store the sequence-counter
             # flag1: message sent
-            if location["type"] == "cellphone":
+            elif location["type"] in ["cellphone", "toilet", "sms"]:
                 if student.school not in location["school"]:
-                    return [{"to": "ip", 'type': 'alert-popup', "data": f"Student {student.naam} {student.voornaam} zit in een andere school, {student.school}"}]
-                last_registration = get(Registration, [("leerlingnummer", "=", student.leerlingnummer), ("location", "=", location_key)], order_by="-id")
+                    return {"status": "warning", "msg": f"Student {student.naam} {student.voornaam} zit in een andere school, {student.school}"}
+                last_registration = get(Registration, [("person_id", "=", student.leerlingnummer), ("location", "=", location_key)], order_by="-id")
                 if last_registration:
                     sequence_counter = last_registration.aantal_items + 1
                 else:
                     sequence_counter = 1
-                registration = add(Registration, {"leerlingnummer": student.leerlingnummer, "location": location_key, "time_in": now, "aantal_items": sequence_counter})
-                if registration:
-                    message_sent = False
-                    if "auto" in location and location["auto"]:  # send message when badge is scanned
-                        message_sent = __send_ss_message(registration, location, student)
-                    ret_location["data"]["data"][0].update({"id": registration.id, "sequence_ctr": sequence_counter, "message_sent": message_sent})
-                    return [ret_location, ret_ip]
+                registration = add(Registration, {"person_id": student.leerlingnummer, "location": location_key, "time_in": now, "aantal_items": sequence_counter})
+            else:
+                return {"status": "warning", "msg": f"Locatie ({location_key}) niet gekend"}
 
-            if location["type"] == "toilet":
-                last_registration = get(Registration, [("leerlingnummer", "=", student.leerlingnummer), ("location", "=", location_key)], order_by="-id")
-                if last_registration:
-                    sequence_counter = last_registration.aantal_items + 1
-                else:
-                    sequence_counter = 1
-                registration = add(Registration, {"leerlingnummer": student.leerlingnummer, "location": location_key, "time_in": now, "aantal_items": sequence_counter})
-                if registration:
-                    ret_location["data"]["data"][0].update({"id": registration.id, "sequence_ctr": sequence_counter})
-                    return [ret_location, ret_ip]
+            if registration:
+                log.info(f'{inspect.currentframe().f_code.co_name}: {registration}')
+                al.socketio.send_to_room({"type": "add-registration", "data": student.to_dict() | registration.to_dict()},  location_key)
+                return {"status": "ok", "msg": f"student {student.naam} {student.voornaam} heeft gescand om {registration.time_in}"}
 
             log.info(f'{inspect.currentframe().f_code.co_name}:  {student.leerlingnummer} could not make a registration')
             return [{"to": "ip", "type": "alert-popup", "data": "Kan geen nieuwe registratie maken"}]

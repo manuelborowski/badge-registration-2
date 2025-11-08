@@ -20,7 +20,6 @@ class Registration(db.Model, SerializerMixin):
     datetime_format = '%Y-%m-%d %H:%M'
     id = db.Column(db.Integer(), primary_key=True)
     person_id = db.Column(db.String(256), default='')
-    person_type = db.Column(db.String(256), default='')
     location = db.Column(db.String(256), default='')
     time_in = db.Column(db.DateTime, default=None)
     time_out = db.Column(db.DateTime, default=None)
@@ -38,12 +37,15 @@ class Registration(db.Model, SerializerMixin):
     flag5 = db.Column(db.Boolean, default=False)
     info = db.Column(UnicodeText, default="")
 
+    def __repr__(self):
+        return f"{self.location}, {self.person_id}, {self.time_in}"
+
 ########### join registrations and students/staff #############
 
 def registration_student_photo_get(location_key, time_low=None, time_high=None, flag1=None, flag2=None, include_foto=False):
     try:
         if include_foto:
-            q = db.session.query(Registration, Student, Photo).join(Student, Student.leerlingnummer == Registration.leerlingnummer).join(Photo, Student.foto_id == Photo.id)
+            q = db.session.query(Registration, Student, Photo).join(Student, Student.leerlingnummer == Registration.person_id).join(Photo, Student.foto_id == Photo.id)
         else:
             q = db.session.query(Registration, Student).join(Student, Student.leerlingnummer == Registration.person_id)
         q = q.filter(Registration.location == location_key, Registration.active == True)

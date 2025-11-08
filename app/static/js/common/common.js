@@ -5,9 +5,12 @@ import {AlertPopup} from "./popup.js";
 // or data: opqaue and should be handled by the calling module
 const __handle_fetch = async resp => {
     const data = await resp.json();
-    if (data && "status" in data) {
+    if (data.status) {
         new AlertPopup(data.status, data.msg);
-        return null;
+        delete data.status;
+        delete data.msg;
+        if (Object.keys(data).length === 0) return null
+        return data;
     }
     return data
 }
