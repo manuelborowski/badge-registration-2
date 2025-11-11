@@ -112,11 +112,12 @@ ap_scheduler.init_app(app)
 ap_scheduler.start()
 
 # Should be last to avoid circular import
-from app.presentation.view import auth, api, user, settings, overview, student
+from app.presentation.view import auth, api, user, settings, overview, student, staff
 app.register_blueprint(auth.bp_auth)
 app.register_blueprint(api.bp_api)
 app.register_blueprint(user.bp_user)
 app.register_blueprint(settings.bp_settings)
 app.register_blueprint(overview.bp_overview)
 app.register_blueprint(student.bp_student)
+app.register_blueprint(staff.bp_staff)
 

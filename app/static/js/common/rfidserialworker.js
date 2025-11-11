@@ -74,23 +74,24 @@ class RfidSerialWorker {
         }
     }
 
+    static SAME_RFID_DELAY = 20; // = x 10 seconds delay before same rfid can be scanned again
     async start_polling() {
         const data = new Uint8Array(new Uint8Array([0xab, 0xba, 0x00, 0x10, 0x00, 0x10]));
         let prev_rfid = null;
-        let delay_ctr = 0;
+        let delay_ctr = RfidSerialWorker.SAME_RFID_DELAY;
         this.__write_interval = setInterval(async () => {
             try {
                 await this.__writer.write(data);
                 const {value, done} = await this.__reader.read();
                 if (done || !value) clearInterval(this.__write_interval);
                 if (value[3] === 0x81) {
-                    const rfid = value.slice(5, 9).toHex();
-                    if ((prev_rfid !== rfid || delay_ctr >= 50) && rfid.length === 8) {
+                    const rfid = value.slice(5, 9).toHex().toUpperCase();
+                    if ((prev_rfid !== rfid || delay_ctr <= 0) && rfid.length === 8) {
                         prev_rfid = rfid;
-                        delay_ctr = 0;
+                        delay_ctr = RfidSerialWorker.SAME_RFID_DELAY;
                         postMessage({type: "rfid", rfid, timestamp: new Date()})
                     } else {
-                        delay_ctr++;
+                        delay_ctr--;
                     }
                 }
             } catch (err) {

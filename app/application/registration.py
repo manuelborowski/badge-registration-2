@@ -1,4 +1,4 @@
-import datetime, inspect, base64, requests, io, pandas as pd, json
+import datetime, inspect, base64, requests, io, pandas as pd, json, re
 import app.application
 from app import app, data as dl, application as al
 from app.application.smartschool import send_message as ss_send_message
@@ -80,7 +80,6 @@ def registration_add(params):
 
         location = location_settings[location_key]
         backoff = location["backoff"] if "backoff" in location else None
-        inout = location["inout"] if "inout" in location else None
 
         # Staff specific registrations
         if "table" in location and location["table"] == "staff":
@@ -88,33 +87,22 @@ def registration_add(params):
             if staff:
                 log.info(f'{inspect.currentframe().f_code.co_name}:  Add registration for {staff.code}, {staff.naam} {staff.voornaam} {location_key}')
                 if location["type"] == "timeregistration":
-                    registrations = get_m(Registration, [("leerlingnummer", "=", staff.code), ("location", "=", location_key), ("time_in", ">", today)], order_by="id")
+                    registrations = get_m(Registration, [("person_id", "=", staff.code), ("location", "=", location_key), ("time_in", ">", today)], order_by="id")
                     last_registration = registrations[-1] if len(registrations) > 0 else None
                     if last_registration and backoff:
                         if (now - (last_registration.time_in if last_registration.time_out == None else last_registration.time_out)).seconds < backoff:
-                            return [{"to": "ip", 'type': 'alert-popup', "data": f"Sorry, u moet langer wachten om terug te scannen"}]
+                            return {"status": "warning", "msg": f"Sorry, u moet langer wachten om terug te scannen"}
                     if last_registration and last_registration.time_out is None:
-                        update(Registration, last_registration, {"time_out": now})
+                        registration = update(Registration, last_registration, {"time_out": now})
                         log.info(f'{inspect.currentframe().f_code.co_name}: Badge out, {staff.code} at {now}')
-                        ret_location = {"to": "location", 'type': 'update-items-in-list-of-registrations',
-                                        'data': {"status": True, "data": [{"id": last_registration.id, "time_out": str(now)}]}}
-                        return {"status": "warning", "msg":f"{staff.voornaam} {staff.naam}<br>"
-                                          f"Je bent IN gescand om {last_registration.time_in}<br>"
-                                          f"Je bent UIT gescand om {last_registration.time_out}"}
-
-                        return [ret_location, ret_ip]
+                        return {"status": "ok", "msg": f"{staff.naam} {staff.voornaam} heeft UIT gescand om {registration.time_out}", "data": staff.to_dict() | registration.to_dict()}
                     else:
-                        ret_location = {"to": "location", 'type': 'update-list-of-registrations',
-                                        'data': {"status": True, "date": str(today), "action": "add",
-                                                 "data": [{"leerlingnummer": staff.code, "naam": staff.naam, "voornaam": staff.voornaam, "klascode": staff.code, "time_out": ""}]
-                                                 }}
-                        registration = add(Registration, {"leerlingnummer": staff.code, "location": location_key, "time_in": now})  # copy extra to text1
+                        registration = add(Registration, {"person_id": staff.code, "location": location_key, "time_in": now})  # copy extra to text1
                         if registration:
-                            ret_location["data"]["data"][0].update({"timestamp": str(now), "id": registration.id})
-                            ret_ip = {"to": "ip", 'type': 'alert-popup', "data": f"{staff.voornaam} {staff.naam}<br>Je bent IN gescand om {now}<br>"}
-                            return [ret_location, ret_ip]
+                            log.info(f'{inspect.currentframe().f_code.co_name}: Badge in, {staff.code} at {now}')
+                            return {"status": "ok", "msg": f"{staff.naam} {staff.voornaam} heeft IN gescand om {registration.time_in}", "data": staff.to_dict() | registration.to_dict()}
             log.info(f'{inspect.currentframe().f_code.co_name}: rfid {rfid} not found in table: staff')
-            return [{"to": "ip", 'type': 'alert-popup', "data": f"Kan personeelslid met rfid {rfid} niet vinden in database"}]
+            return {"status": "warning", "msg": f"Kan personeelslid met rfid {rfid} niet vinden in database"}
 
         # student specific registrations
         if rfid:
@@ -122,7 +110,7 @@ def registration_add(params):
         elif leerlingnummer:
             student = get(Student, [("leerlingnummer", "=", leerlingnummer)])
         else:
-            return [{"to": "ip", 'type': 'alert-popup', "data": "Geen RFID of leerlingnummer gevonden"}]
+            return {"status": "warning", "msg": "Geen RFID of leerlingnummer gevonden"}
         if student:
             photo_obj = get(Photo, ("id", "=", student.foto_id))
             photo = base64.b64encode(photo_obj.photo).decode('utf-8') if photo_obj else ''
@@ -141,7 +129,7 @@ def registration_add(params):
                     current_qty = int(mask[day_index + 6])
                     if current_qty >= max_qty:
                         log.info(f'{inspect.currentframe().f_code.co_name}:  {student.leerlingnummer}, dagmasker, exceeded quantity {current_qty}/{max_qty} ')
-                        return {"status": "ok", "msg": f"Student {student.naam} {student.voornaam} heeft het maximum aantal van {max_qty} artikel(s) bereikt"}
+                        return {"status": "warning", "msg": f"Student {student.naam} {student.voornaam} heeft het maximum aantal van {max_qty} artikel(s) bereikt"}
                     current_qty += 1
                     mask = mask[:day_index + 6] + str(current_qty) + mask[day_index + 7:]
                     update(Student, student, {location["dagmasker"]: mask})
@@ -167,16 +155,15 @@ def registration_add(params):
                 registration = add(Registration, {"person_id": student.leerlingnummer, "location": location_key, "time_in": now, "aantal_items": sequence_counter})
             else:
                 return {"status": "warning", "msg": f"Locatie ({location_key}) niet gekend"}
-
             if registration:
                 log.info(f'{inspect.currentframe().f_code.co_name}: {registration}')
                 al.socketio.send_to_room({"type": "add-registration", "data": student.to_dict() | registration.to_dict()},  location_key)
                 return {"status": "ok", "msg": f"student {student.naam} {student.voornaam} heeft gescand om {registration.time_in}"}
 
             log.info(f'{inspect.currentframe().f_code.co_name}:  {student.leerlingnummer} could not make a registration')
-            return [{"to": "ip", "type": "alert-popup", "data": "Kan geen nieuwe registratie maken"}]
+            return {"status": "warning", "msg": "Kan geen nieuwe registratie maken"}
         log.info(f'{inspect.currentframe().f_code.co_name}:  rif/leerlingnummer {rfid}/{leerlingnummer} not found in database')
-        return [{"to": "ip", "type": "alert-popup", "data": f"Kan student met rfid {rfid} / leerlingnummer {leerlingnummer} niet vinden in database"}]
+        return {"status": "warning", "msg": f"Kan student met rfid {rfid} / leerlingnummer {leerlingnummer} niet vinden in database"}
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": f"Foutmelding: {e}"}
@@ -223,67 +210,27 @@ def registration_get(location_key=None, view_layout=None, period=None):
     try:
         locations = get_configuration_setting("location-profiles")
         location = locations[location_key]
-        type = location["type"]
         ret = []
-        time_low = time_high = selected_day = None
+        time_low = time_high = None
         flag1 = flag2 = None
-        # ignore period filter when the sms-specific or cellphone-specific is used
         if period in ["last-2-months", "last-4-months", "last-week"]:
             delta = 60 if period == "last-2-months" else 120 if period == "last-4-months" else 7
             time_low = datetime.datetime.now() - datetime.timedelta(days=delta)
         if "table" in location and location["table"] == "staff":
             # Staff specific data
-            ret.update({"headers": ["Naam", "Code", "Tijd in", "Startuur", "Verschil", "Tijd uit", "Einduur", "Verschil", "Dagverschil", "Opmerking"]})
-            registrations = dl.registration.registration_staff_get(location_key, search=search, time_low=time_low, time_high=time_high)
-            staff_cache = {}
+            registrations = dl.registration.registration_staff_get(location_key, time_low=time_low, time_high=time_high)
             for tuple in registrations:
-                registration = tuple[0]
-                staff = tuple[1]
-                item = {"person": staff.to_dict(), "registration": registration}
-                # weekday = registration.time_in.weekday()
-                # key = f"{staff.code}{weekday}"
-                # if key not in staff_cache:
-                #     slices = staff.extra.split(",")
-                #     if slices and len(slices) == 10:
-                #         staff_cache[key] = {"startuur": slices[weekday * 2], "einduur": slices[weekday * 2 + 1]}
-                #     else:
-                #         staff_cache[key] = {"startuur": "", "einduur": ""}
-                # item.update({"startuur": staff_cache[key]["startuur"], "einduur": staff_cache[key]["einduur"]})
-
-                ret["data"].append(item)
+                item = tuple[1].to_dict() | tuple[0].to_dict()
+                ret.append(item)
         else:
             # Student specific data
             include_foto = view_layout == "tile"
-            # if search == None:
-            #     if type == "sms":
-            #         flag1 = False if filters["sms-specific-select"] == "no-ack" else None
-            #         flag2 = False if filters["sms-specific-select"] == "no-sms-sent" else None
-            #     elif type == "cellphone":
-            #         flag1 = False if filters["cellphone-specific-select"] == "no-message-sent" else None
-            #     if flag1 != None or flag2 != None:
-            #         time_low = time_high = selected_day = None
             registrations = dl.registration.registration_student_photo_get(location_key, time_low=time_low, time_high=time_high, flag1=flag1, flag2=flag2, include_foto=include_foto)
             for tuple in registrations:
-                registration = tuple[0]
-                student = tuple[1]
-                item = student.to_dict()
-                item.update(registration.to_dict())
+                item = tuple[1].to_dict() | tuple[0].to_dict()
                 if include_foto:
-                    photo = tuple[2]
-                    item.update({"photo": base64.b64encode(photo.photo).decode('utf-8') if photo and photo.photo else ''})
-                # if type == "sms":
-                #     item.update({"remark": registration.text1, "remark_ack": registration.flag1, "sms_sent": registration.flag2, })
-                # elif type == "cellphone":
-                #     item.update({"sequence_ctr": registration.aantal_items, "message_sent": registration.flag1})
-                # elif type == "toilet":
-                #     item.update({"sequence_ctr": registration.aantal_items})
+                    item.update({"photo": base64.b64encode(tuple[2].photo).decode('utf-8') if tuple[2] and tuple[2].photo else ''})
                 ret.append(item)
-
-            # if search != None:
-            #     ret.update({"search": True})
-            # elif selected_day != None:
-            #     ret.update({"date": selected_day})
-
         return ret
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
@@ -300,6 +247,108 @@ def clear_all_registrations(location):
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return False
+
+def get_balance(location_key, startdate, enddate):
+    try:
+        locations = get_configuration_setting("location-profiles")
+        if location_key not in locations:
+            log.error(f'{inspect.currentframe().f_code.co_name}: {location_key} is not a valid key')
+            return f"{location_key} is not a valid key", "error.txt"
+        else:
+            location = locations[location_key]
+        if "school" not in location:
+            log.error(f'{inspect.currentframe().f_code.co_name}: {location} has no school parameter')
+            return f"{location} has no school parameter", "error.txt"
+        else:
+            school = location["school"]
+        startdate = startdate.split("T")[0]
+        enddate = enddate.split("T")[0]
+        db_students = dl.models.get_m(Student)
+        leerlingnummers = [s.leerlingnummer for s in db_students if s.school == school]
+        registrations =  dl.models.get_m(Registration, [("time_in", ">=", startdate), ("time_in", "<=", f"{enddate}T23:59"), ("location", "=", location_key)])
+        lln2data = {}
+        for registation in registrations:
+            if registation.person_id in leerlingnummers:
+                if registation.person_id in lln2data:
+                    lln2data[registation.person_id]["nbr"] += 1
+                else:
+                    lln2data[registation.person_id] = {"nbr": 1, "price": registation.prijs_per_item}
+        data = [f"{k};{v['nbr']};{v['price']/100}" for k, v in lln2data.items()]
+        data_text = "\n".join(data)
+        filename = f"{school}-{location['locatie']}-{startdate}-{enddate}.txt"
+        return data_text, filename
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return f"error: {str(e)}", "error.txt"
+
+maand2index_nl = ["jan", "feb", "mrt", "apr", "jun", "jul", "aug", "sept", "okt", "nov", "dec"]
+maand2index_en = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+papercut_data = {}
+
+def papercut_upload(files):
+    try:
+        global papercut_data
+        papercut_data["data"] = []
+        for file in files:
+            lines = file.read().decode("iso_8859_1")
+            lines = lines.split("\n")
+            lines.pop(0) # comment
+            date = lines.pop(0)
+            #line 1 contains start and end date
+            try:
+                if "From date" in date:
+                    # English format
+                    # From date = Sep 1, 2024 12:00:00 AM, To date = Dec 4, 2024 11:59:59 PM"
+                    [m, d, y] = list(re.findall(r"From date = (\w+) (\d+), (\d+)", date)[0])
+                    m = maand2index_en.index(m) + 1
+                    papercut_data["startdate"] = f"{y}{m:02}{int(d):02}"
+                    [m, d, y] = list(re.findall(r"To date = (\w+) (\d+), (\d+)", date)[0])
+                    m = maand2index_en.index(m) + 1
+                    papercut_data["enddate"] = f"{y}{m:02}{int(d):02}"
+                else:
+                    # Dutch format
+                    # Vanaf datum = 16-mrt-2024 0:00:00, Tot datum = 21-jun-2024 23:59:59"
+                    [d, m, y] = re.search(r"Vanaf datum = (.*) 0:00:00", date).group(1).split("-")
+                    m = maand2index_nl.index(m) + 1
+                    papercut_data["startdate"] = f"{y}{m:02}{int(d):02}"
+                    [d, m, y] = re.search(r"Tot datum = (.*) 23:59", date).group(1).split("-")
+                    m = maand2index_nl.index(m) + 1
+                    papercut_data["enddate"] = f"{y}{m:02}{int(d):02}"
+            except Exception as e:
+                return {"status": "warning", "msg": f"Kan datum info in 2de lijn niet interpreteren:<br>{date}"}
+
+            split_character = "," if "From date" in date else ";"
+            header = lines.pop(0) # header
+            for total_pages_index, f in enumerate(header.split(split_character)):
+                if f == "Totaal aantal afgedrukte Pagina's" or f == "Total Printed Pages":
+                    break
+            students = dl.models.get_m(Student)
+            username2student = {s.username.lower(): s for s in students}
+            for line in lines:
+                fields = line.split(split_character)
+                if fields[0].lower() in username2student:
+                    student = username2student[fields[0].lower()]
+                    papercut_data["data"].append({"leerlingnummer": student.leerlingnummer, "deelschool": student.school, "nbr_pages": fields[total_pages_index]})
+                else:
+                    log.info(f"Not found, {fields[0].lower()}")
+        return {"status": "ok", "msg": "Download gedaan", "data": {"status": True}}
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return {"status": "error", "msg": f"Fout, {str(e)}"}
+
+def papercut_export(type):
+    try:
+        global papercut_data
+        data = []
+        for item in papercut_data["data"]:
+            if item["deelschool"] == type:
+                data.append(f"{item['leerlingnummer']};{item['nbr_pages']};0.05")
+        data_text = "\n".join(data)
+        filename = f"{type}-afdrukken-{papercut_data['startdate']}-{papercut_data['enddate']}.txt"
+        return data_text, filename
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return f"error: {str(e)}", "error.txt"
 
 def api_schoolrekening_get(options):
     try:

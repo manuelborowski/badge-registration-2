@@ -17,21 +17,23 @@ filter_operators = ["$=$", "$!$", "$>$", "$<$", "$>=$", "$<=$", "$l$"]
 # start and stop (if not none) indicate the slice that needs to be taken from the data
 def process_options(options):
     try:
-        fields = options['fields'].split(',') if 'fields' in options else []
-        filters = []
-        if 'filters' in options:
-            for filter in options['filters'].split(','):
-                for operator in filter_operators:
-                    if operator in filter:
-                        k, v = filter.split(operator)
-                        if v == "null":
-                            v = None
-                        filters.append((k, operator[1:-1], v))
-                        break
-        start = int(options["start"]) if "start" in options else None
-        stop = int(options["stop"]) if "stop"in options else None
-        order_by = options["order_by"] if "order_by" in options else None
-        return fields, filters, order_by, start, stop
+        if options:
+            fields = options['fields'].split(',') if 'fields' in options else []
+            filters = []
+            if 'filters' in options:
+                for filter in options['filters'].split(','):
+                    for operator in filter_operators:
+                        if operator in filter:
+                            k, v = filter.split(operator)
+                            if v == "null":
+                                v = None
+                            filters.append((k, operator[1:-1], v))
+                            break
+            start = int(options["start"]) if "start" in options else None
+            stop = int(options["stop"]) if "stop"in options else None
+            order_by = options["order_by"] if "order_by" in options else None
+            return fields, filters, order_by, start, stop
+        return None, None, None, None, None
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": True, "data": e}

@@ -68,6 +68,10 @@ class User(UserMixin, db.Model, SerializerMixin):
         return self.level >= 3
 
     @property
+    def is_at_least_level_4(self):
+        return self.level >= 4
+
+    @property
     def is_at_least_level_5(self):
         return self.level >= 5
 

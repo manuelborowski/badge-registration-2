@@ -147,6 +147,22 @@ def cron_student_load_from_sdh(opaque=None, **kwargs):
         return 0, 0, 0
     return len(new_students), nbr_updated, len(deleted_students)
 
+def update(data):
+    try:
+        student = dl.models.get(Student, ("id", "=", data["id"]))
+        del data["id"]
+        if ("rfid" in data):
+            student_rfid = dl.models.get(Student, ("rfid", "=", data["rfid"]))
+            if student_rfid and student.id != student_rfid.id:
+                return {"status": "warning", "msg": f"RFID bestaat al voor leerling {student_rfid.naam} {student_rfid.voornaam}"}
+        ret = dl.models.update(Student, student, data)
+        if (ret):
+            return ret.to_dict()
+        return {"status": "warning", "msg": f"Onbekende fout"}
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return {"status": "error", "msg": f"Fout: {str(e)}"}
+
 
 def klassen_get_unique():
     klassen = get_m(Student, fields=['klascode'])
@@ -167,7 +183,6 @@ def api_reservation_add(leerlingnummer, location_key, item):
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": False, "data": str(e)}
-
 
 def push_reservations_to_server(opaque=None, **kwargs):
     try:

@@ -8,6 +8,9 @@ class RfidSerial {
         };
     }
 
+    // callback = {type, data...}
+    // type: state, value: false or true
+    // type: rfid, rfid: rfid-code, timestamp: now()
     connect = async (cb = null) => {
         this.__cb = cb;
         // Check if page has already access to the usb port.  If so, use it.

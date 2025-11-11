@@ -45,6 +45,14 @@ def level_5_required(func):
         return func(*args, **kwargs)
     return decorated_view
 
+def level_4_required(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if not current_user.is_at_least_level_4:
+            abort(403)
+        return func(*args, **kwargs)
+    return decorated_view
+
 def level_3_required(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):

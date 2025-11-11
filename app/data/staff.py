@@ -7,8 +7,6 @@ class Staff(db.Model, SerializerMixin):
     date_format = '%Y-%m-%d'
     datetime_format = '%Y-%m-%d %H:%M'
 
-    serialize_rules = ("is_interim_to_text", "is_wisa_to_text",)
-
     id = db.Column(db.Integer(), primary_key=True)
     voornaam = db.Column(db.String(256), default='')
     naam = db.Column(db.String(256), default='')
@@ -27,6 +25,7 @@ class Staff(db.Model, SerializerMixin):
     @property
     def person_id(self):
         return self.code
+
 
 ############ staff overview list #########
 def pre_sql_query():

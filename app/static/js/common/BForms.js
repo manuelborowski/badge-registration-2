@@ -159,6 +159,9 @@ export class BForms {
                             tag = document.createElement("select");
                         } else if (element.type === "input") {
                             tag = document.createElement("input");
+                        } else if (element.type === "date") {
+                            tag = document.createElement("input");
+                            tag.type = "date"
                         }
                         if (tag) {
                             label.appendChild(span);

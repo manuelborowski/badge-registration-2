@@ -10,7 +10,7 @@ log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 
 
-def staff_load_from_sdh(opaque=None, **kwargs):
+def cron_staff_load_from_sdh(opaque=None, **kwargs):
     try:
         log.info(f"{inspect.currentframe().f_code.co_name}, START")
         updated_staff = []

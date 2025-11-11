@@ -64,11 +64,9 @@ def registration_student_photo_get(location_key, time_low=None, time_high=None, 
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
 
 
-def registration_staff_get(location_key, search=None, time_low=None, time_high=None):
+def registration_staff_get(location_key, time_low=None, time_high=None):
     try:
-        q = db.session.query(Registration, Staff).join(Staff, Staff.code == Registration.leerlingnummer)
-        if search is not None:
-            q = q.filter(or_(Staff.naam.like(f"%{search}%"), Staff.voornaam.like(f"%{search}%")))
+        q = db.session.query(Registration, Staff).join(Staff, Staff.code == Registration.person_id)
         q = q.filter(Registration.location == location_key)
         if time_low:
             q = q.filter(Registration.time_in >= time_low)

@@ -38,6 +38,14 @@ const table_config = {
     row_callback: __row_callback,
 }
 const table_template = {
+    staff: [
+        {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
+        {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
+        {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
+        {name: "code", data: "code", orderable: true, width: "4%", visible: "yes"},
+        {name: "Tijd in", data: "time_in", orderable: true, width: "4%", visible: "yes"},
+        {name: "Tijd uit", data: "time_out", orderable: true, width: "4%", visible: "yes"},
+    ],
     student: [
         {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
         {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"},
@@ -122,7 +130,6 @@ const action_menu_items = [
 
 const canvas_element = document.getElementById("canvas");
 const __photo_size_factor = 50;
-let canvas_container = null;
 const __render_tile_view = (registrations) => {
     for (const item of registrations) {
         let registration_container = null;
@@ -151,11 +158,13 @@ const __render_tile_view = (registrations) => {
 const __render_list_view = (registrations) => {
     const location = meta.location[__filters.location];
     const initial_data = registrations.map(i => Object.assign(i, {row_action: i.id, DT_RowId: i.id}));
-    let config = {}
-    if (location.table && location.table === "staff") {} else {
-        const template = table_template.student.concat(table_template[location.type]);
-        config = Object.assign(table_config, {template})
+    let template = {}
+    if (location.table && location.table === "staff") {
+        template = table_template.staff;
+    } else {
+        template = table_template.student.concat(table_template[location.type]);
     }
+    const config = Object.assign(table_config, {template})
     datatables_init({config, initial_data});
 }
 
