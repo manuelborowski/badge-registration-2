@@ -7,7 +7,6 @@ from app.application.sms import send_sms
 from app.data.models import get, get_m, commit, update, update_m, add, add_m, delete_m
 from app.data.student import Student
 from app.data.staff import Staff
-from app.data.reservation import Reservation
 from app.data.registration import Registration
 from app.data.photo import Photo
 from app.data.settings import get_configuration_setting
@@ -35,32 +34,6 @@ def registration_add(params):
             now = datetime.datetime.now()
         now = now.replace(microsecond=0)
         today = now.date()
-        if location_key == "new-rfid":
-            reservation_margin = app.config["RESERVATION_MARGIN"]
-            minimum_reservation_time = now - datetime.timedelta(seconds=reservation_margin)
-            reservations = get_m(Reservation, [("valid", "=", False), ("timestamp", ">", minimum_reservation_time)])
-            if reservations:
-                reservation = reservations[0]
-                if reservation.item == "rfid":
-                    rfid = rfid.upper()
-                    reservation.data = rfid
-                    reservation.valid = True
-                    student = get(Student, [("leerlingnummer", "=", reservation.leerlingnummer)])
-                    student.rfid = rfid
-                    commit()
-                    if app.config["SDH_PUSH_RESERVATION_ON_THE_FLY"]:
-                        ret = al.student.push_reservations_to_server()
-                        if len(ret["data"]["errors"]) == 0:
-                            log.info(f'{inspect.currentframe().f_code.co_name}:  Add reservation and push to SDH for {student.leerlingnummer}, {student.naam} {student.voornaam}')
-                            return [{"to": "ip", "type": "alert-popup", "data": f"Student {student.naam} {student.voornaam} heeft nu RFID code {rfid}<br>Student kan ook al afdrukken met de badge"}]
-                        else:
-                            log.error(f'{inspect.currentframe().f_code.co_name}:  Add reservation and push to SDH for {student.leerlingnummer}, {student.naam} {student.voornaam}, returned error: {ret["data"]["errors"][0]}')
-                            return [{"to": "ip", "type": "alert-popup", "data": f"<b>Foutmelding</b>: {ret["data"]["errors"][0]}"}]
-                    else:
-                        log.info(f'{inspect.currentframe().f_code.co_name}:  Add reservation for {student.leerlingnummer}, {student.naam} {student.voornaam} {location_key}')
-                        return [{"to": "ip", "type": "alert-popup", "data": f"Student {student.naam} {student.voornaam} heeft nu RFID code {rfid}"}]
-            log.info(f'{inspect.currentframe().f_code.co_name}:  No valid reservation for {location_key}')
-            return [{"to": "ip", "type": "alert-popup", "data": f"Nieuwe RFID niet gelukt.  Misschien te lang gewacht met scannen, probeer nogmaals"}]
 
         if location_key == "test":
             student = get(Student, [("rfid", "=", rfid)])
@@ -93,13 +66,37 @@ def registration_add(params):
                         if (now - (last_registration.time_in if last_registration.time_out == None else last_registration.time_out)).seconds < backoff:
                             return {"status": "warning", "msg": f"Sorry, u moet langer wachten om terug te scannen"}
                     if last_registration and last_registration.time_out is None:
-                        registration = update(Registration, last_registration, {"time_out": now})
+                        text1 = ""
+                        weekday = now.weekday()
+                        slices = staff.extra.split(",")
+                        stop = slices[weekday * 2 + 1] if slices and len(slices) == 10 else None
+                        if stop:
+                            in_time = last_registration.text1.split(",")[1]
+                            [h, m, s] = in_time.split(":")
+                            in_delta_time = datetime.timedelta(hours=abs(int(h)), minutes=int(m), seconds=int(s))
+                            if in_time[0] == "-":
+                                in_delta_time *= -1
+                            [ hour, minute ] = stop.split(":")
+                            out_delta_time = now - now.replace(hour=int(hour), minute=int(minute))
+                            total_delta_time = in_delta_time + out_delta_time
+                            text1 = f"{stop},{"-" if out_delta_time.days < 0 else ""}{str(abs(out_delta_time))},{"-" if total_delta_time.days < 0 else ""}{str(abs(total_delta_time))}"
+                        registration = update(Registration, last_registration, {"time_out": now, "text1": last_registration.text1 + "," + text1})
                         log.info(f'{inspect.currentframe().f_code.co_name}: Badge out, {staff.code} at {now}')
+                        al.socketio.send_to_room({"type": "add-registration", "data": staff.to_dict() | registration.to_dict()}, location_key)
                         return {"status": "ok", "msg": f"{staff.naam} {staff.voornaam} heeft UIT gescand om {registration.time_out}", "data": staff.to_dict() | registration.to_dict()}
                     else:
-                        registration = add(Registration, {"person_id": staff.code, "location": location_key, "time_in": now})  # copy extra to text1
+                        text1 = ""
+                        weekday = now.weekday()
+                        slices = staff.extra.split(",")
+                        start = slices[weekday * 2] if slices and len(slices) == 10 else None
+                        if start:
+                            [ hour, minute ] = start.split(":")
+                            delta_time = now.replace(hour=int(hour), minute=int(minute)) - now
+                            text1 = f"{start},{"-" if delta_time.days < 0 else ""}{str(abs(delta_time))}"
+                        registration = add(Registration, {"person_id": staff.code, "location": location_key, "time_in": now, "text1": text1})  # copy extra to text1
                         if registration:
                             log.info(f'{inspect.currentframe().f_code.co_name}: Badge in, {staff.code} at {now}')
+                            al.socketio.send_to_room({"type": "add-registration", "data": staff.to_dict() | registration.to_dict()}, location_key)
                             return {"status": "ok", "msg": f"{staff.naam} {staff.voornaam} heeft IN gescand om {registration.time_in}", "data": staff.to_dict() | registration.to_dict()}
             log.info(f'{inspect.currentframe().f_code.co_name}: rfid {rfid} not found in table: staff')
             return {"status": "warning", "msg": f"Kan personeelslid met rfid {rfid} niet vinden in database"}
@@ -157,7 +154,7 @@ def registration_add(params):
                 return {"status": "warning", "msg": f"Locatie ({location_key}) niet gekend"}
             if registration:
                 log.info(f'{inspect.currentframe().f_code.co_name}: {registration}')
-                al.socketio.send_to_room({"type": "add-registration", "data": student.to_dict() | registration.to_dict()},  location_key)
+                al.socketio.send_to_room({"type": "add-registration", "data": student.to_dict() | registration.to_dict() | {"photo": photo}},  location_key)
                 return {"status": "ok", "msg": f"student {student.naam} {student.voornaam} heeft gescand om {registration.time_in}"}
 
             log.info(f'{inspect.currentframe().f_code.co_name}:  {student.leerlingnummer} could not make a registration')

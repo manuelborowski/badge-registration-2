@@ -1,7 +1,6 @@
 import inspect, requests, base64, datetime
 from app.data.student import Student
 from app.data.photo import Photo
-from app.data.reservation import Reservation
 from app.data.models import get_m, add_m, update_m, delete_m, get, add
 
 #logging on file level
@@ -170,51 +169,37 @@ def klassen_get_unique():
     klassen.sort()
     return klassen
 
-
-def api_reservation_add(leerlingnummer, location_key, item):
-    try:
-        now = datetime.datetime.now().replace(microsecond=0)
-        reservation = add({"leerlingnummer": leerlingnummer, "location": location_key, "timestamp": now, "item": item})
-        if reservation:
-            log.info(f'{inspect.currentframe().f_code.co_name}: Reservation add, leerlingnummer {leerlingnummer}, location: {location_key}, time_in: {now}, item: {item}')
-            return {"status": True}
-        else:
-            return {"status": False, "data": "Kan reservatie niet maken"}
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": str(e)}
-
-def push_reservations_to_server(opaque=None, **kwargs):
-    try:
-        sdh_student_url = app.config["SDH_SET_STUDENT_URL"]
-        sdh_key = app.config["SDH_SET_API_KEY"]
-        sdh_test = app.config["SDH_SET_TEST"]
-        reservations = get_m(Reservation, ("valid", "=", True))
-        nbr_students_ok = 0
-        nbr_students_nok = 0
-        error_log = []
-        for reservation in reservations:
-            if reservation.item == "rfid":
-                res = requests.post(sdh_student_url, headers={'x-api-key': sdh_key}, json={"leerlingnummer": reservation.leerlingnummer, "rfid": reservation.data, "test": sdh_test})
-                if res.status_code == 200:
-                    data = res.json()
-                    if data["status"]:
-                        log.info(f'{inspect.currentframe().f_code.co_name}: Updated student RFID to SDH, {reservation.leerlingnummer}, {reservation.data}')
-                        nbr_students_ok += 1
-                    else:
-                        log.info(f'{inspect.currentframe().f_code.co_name}: SDH returned, {data["data"]}')
-                        nbr_students_nok += 1
-                        error_log.append(data["data"])
-                else:
-                    log.error(f'{inspect.currentframe().f_code.co_name}: api call to {sdh_student_url} returned {res.status_code}')
-                    nbr_students_nok += 1
-        reservations = get_m(Reservation)
-        delete_reservations = [r.id for r in reservations]
-        delete_m(Reservation, ids=delete_reservations)
-        return {"status": True, "data": {"nbr_ok": nbr_students_ok, "nbr_nok": nbr_students_nok, "errors": error_log}}
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": str(e)}
+# def push_reservations_to_server(opaque=None, **kwargs):
+#     try:
+#         sdh_student_url = app.config["SDH_SET_STUDENT_URL"]
+#         sdh_key = app.config["SDH_SET_API_KEY"]
+#         sdh_test = app.config["SDH_SET_TEST"]
+#         reservations = get_m(Reservation, ("valid", "=", True))
+#         nbr_students_ok = 0
+#         nbr_students_nok = 0
+#         error_log = []
+#         for reservation in reservations:
+#             if reservation.item == "rfid":
+#                 res = requests.post(sdh_student_url, headers={'x-api-key': sdh_key}, json={"leerlingnummer": reservation.leerlingnummer, "rfid": reservation.data, "test": sdh_test})
+#                 if res.status_code == 200:
+#                     data = res.json()
+#                     if data["status"]:
+#                         log.info(f'{inspect.currentframe().f_code.co_name}: Updated student RFID to SDH, {reservation.leerlingnummer}, {reservation.data}')
+#                         nbr_students_ok += 1
+#                     else:
+#                         log.info(f'{inspect.currentframe().f_code.co_name}: SDH returned, {data["data"]}')
+#                         nbr_students_nok += 1
+#                         error_log.append(data["data"])
+#                 else:
+#                     log.error(f'{inspect.currentframe().f_code.co_name}: api call to {sdh_student_url} returned {res.status_code}')
+#                     nbr_students_nok += 1
+#         reservations = get_m(Reservation)
+#         delete_reservations = [r.id for r in reservations]
+#         delete_m(Reservation, ids=delete_reservations)
+#         return {"status": True, "data": {"nbr_ok": nbr_students_ok, "nbr_nok": nbr_students_nok, "errors": error_log}}
+#     except Exception as e:
+#         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+#         return {"status": False, "data": str(e)}
 
 ############ datatables: student overview list #########
 def format_data(db_list, total_count=None, filtered_count=None):

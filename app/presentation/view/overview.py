@@ -1,9 +1,9 @@
-import json
-
+import json, inspect
 from flask import render_template, request, Blueprint
-from flask_login import login_required, current_user
+from flask_login import login_required
+from app.data.registration import Registration
 from app.data.settings import get_configuration_setting
-from app import application as al
+from app import application as al, data as dl
 
 from app import log, app
 
@@ -23,35 +23,28 @@ def meta():
     })
 
 
-@bp_overview.route('/overview', methods=['GET'])
+@bp_overview.route('/overview', methods=['GET', "UPDATE"])
 @login_required
 def overview():
-    if request.method == "GET":
-        location = request.args.get("location")
-        view_layout = request.args.get("view_layout")
-        period = request.args.get("period")
-        ret = al.registration.registration_get(location, view_layout, period)
-        return json.dumps(ret)
-
-
-def get_current_registrations(msg, client_sid=None):
     try:
-        filters = msg["data"]["filters"]
-        ret = al.registration.registration_get(filters)
-        al.socketio.send_to_client({'type': 'update-list-of-registrations', 'data': ret})
+        if request.method == "GET":
+            location = request.args.get("location")
+            view_layout = request.args.get("view_layout")
+            period = request.args.get("period")
+            ret = al.registration.registration_get(location, view_layout, period)
+            return json.dumps(ret)
+        if request.method == "UPDATE":
+            data = json.loads(request.data)
+            item = dl.models.get(Registration, ("id", "=", data["id"]))
+            del data["id"]
+            registration = dl.models.update(Registration, item, data)
+            return json.dumps({"data": registration.to_dict()})
     except Exception as e:
-        al.socketio.send_to_client({'type': 'update-list-of-registrations', 'data': {'status': False, 'message': str(e)}})
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return {'status': "error", 'msg': str(e)}
 
 
-def clear_all_registrations(msg, client_sid=None):
-    try:
-        ret = mregistration.clear_all_registrations(msg["data"]["location"])
-    except Exception as e:
-        log.error(f'{sys._getframe().f_code.co_name}: {e}')
 
-
-al.socketio.subscribe_on_type('request-list-of-registrations', get_current_registrations)
-al.socketio.subscribe_on_type('clear-all-registrations', clear_all_registrations)
 #
 # @bp_overview.route('/overview/export/<string:key>/<string:startdate>/<string:enddate>', methods=['GET'])
 # def export_registrations(key, startdate, enddate):

@@ -15,8 +15,9 @@ from typing import Callable
 # 0.2: replaced sys._getframe() with inspect
 # 0.3: aesthetic updates
 # 0.4: implemented heartbeat
+# 0.5: overview works
 
-version = "0.4"
+version = "0.5"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

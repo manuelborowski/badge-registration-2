@@ -1,7 +1,7 @@
 import {return_render_ellipsis} from "./ellipsis.js";
 import {socketio} from "../common/socketio.js";
 import {AlertPopup} from "../common/popup.js";
-import {busy_indication_off, busy_indication_on, fetch_post} from "../common/common.js";
+import {busy_indication_off, busy_indication_on, fetch_post, fetch_update} from "../common/common.js";
 import {base_init} from "../base.js";
 import {ContextMenu} from "../common/context_menu.js";
 import {FilterMenu} from "../common/filter_menu.js";
@@ -204,21 +204,23 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         },
         lengthMenu: [100, 500, 1000, 2000],
         pageLength: 2000,
-        // Called first. This callback is executed when a TR element is created (and all TD child elements have been inserted)
+        // This callback is executed for every row, but only when the table is created.  If e.g. a cell needs to be highlighted depending on a value, and that value does not change.
         createdRow: function (row, data, dataIndex, cells) {
+            // update, if required, data before checking on row_color and cell_color
+            if (callbacks.created_row) callbacks.created_row(row, data, dataIndex, cells);
             // in format_data, it is possible to tag a line with a different backgroundcolor
-            if (data.overwrite_row_color && data.overwrite_row_color !== "") $(row).attr("style", `background-color:${data.overwrite_row_color};`);
-            if (data.overwrite_cell_color) {
-                for (const [cn, cc] of Object.entries(data.overwrite_cell_color)) {
+            if (data.row_action !== null) row.cells[0].innerHTML = `<input type='checkbox' class='chbx_all' name='chbx' value='${data.row_action}' ${data.disable_selectbox ? "disabled": ""}>`
+            // if (data.disable_selectbox) row.firstChild.firstChild.disabled = true;
+            if (data.row_color) $(row).attr("style", `background-color:${data.row_color};`);
+            if (data.cell_color) {
+                for (const [cn, cc] of Object.entries(data.cell_color)) {
                     const ci = datatable_column2index[cn];
                     $(cells[ci]).attr("style", `background-color: ${cc};`);
                 }
             }
-            if (callbacks.created_row) callbacks.created_row(row, data, dataIndex, cells);
         },
-        // Called second. This callback allows you to 'post process' each row after it have been generated for each table draw, but before it is rendered into the document
+        // This callback is executed each time the table is reloaded or a value is changed.
         rowCallback: function (row, data, displayNum, displayIndex, dataIndex) {
-            if (data.row_action !== null) row.cells[0].innerHTML = `<input type='checkbox' class='chbx_all' name='chbx' value='${data.row_action}'>`
             // celledit of type select: overwrite cell content with label from optionlist
             if (cell_edit.select_options) {
                 for (const [column, select] of Object.entries(cell_edit.select_options)) {
@@ -227,8 +229,8 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
                     }
                 }
             }
-            if (ctx.config.row_callback) {
-                const res = ctx.config.row_callback(data, row);
+            if (callbacks.row_callback) {
+                const res = callbacks.row_callback(data, row);
                 if (res) res.forEach(c => row.cells[c.index].innerHTML = c.value);
             }
         },
@@ -288,21 +290,15 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         ctx.table.draw();
     });
 
-    const update_cell_changed = data => {socketio.send_to_server(`${ctx.config.view}-cell-update`, data);}
-
-    const __cell_edit_changed_cb = ($dt_row, column_index, new_value, old_value) => {
+    const __cell_edit_changed_cb = async ($dt_row, column_index, new_value, old_value) => {
         const value = ctx.config.template[column_index].celledit.value_type === 'int' ? parseInt(new_value) : new_value;
         const column_name = ctx.table.column(column_index).dataSrc()
-        update_cell_changed({id: $dt_row.data().DT_RowId, column: column_name, value});
+        // update_cell_changed({id: $dt_row.data().DT_RowId, column: column_name, value});
+        await fetch_update(`${ctx.config.view}.${ctx.config.view}`, {id: $dt_row.data().DT_RowId, [column_name]: value});
     }
 
-    function cell_toggle_changed_cb(cell, row, value) {
-        const data = {
-            'id': row.data().DT_RowId,
-            'column': cell.index().column,
-            'value': value
-        }
-        update_cell_changed(data);
+    const  cell_toggle_changed_cb = async (cell, row, value) => {
+        await fetch_update(`${ctx.config.view}.${ctx.config.view}`, {id: row.data().DT_RowId, [cell.index().column]: value});
     }
 
     const cell_edit = new CellEdit(ctx.table, ctx.config.template, __cell_edit_changed_cb);

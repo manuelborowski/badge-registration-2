@@ -11,6 +11,7 @@ export const base_init = ({action_menu_items = []}) => {
     if (suppress_navbar) return;
 
     const navbar_element = document.querySelector("#navbar");
+    navbar_element.innerHTML = "";
     let dd_ctr = 0;
 
     for (const item of menu) {
