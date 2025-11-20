@@ -1,6 +1,7 @@
 import inspect, requests
 from app.data.models import get_m, update_m, add_m, delete_m
 from app.data.staff import Staff
+from app import data as dl
 
 #logging on file level
 import logging
@@ -9,6 +10,21 @@ from app import MyLogFilter, top_log_handle, app
 log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 
+def update(data):
+    try:
+        student = dl.models.get(Staff, ("id", "=", data["id"]))
+        del data["id"]
+        if ("rfid" in data):
+            staff_rfid = dl.models.get(Staff, ("rfid", "=", data["rfid"]))
+            if staff_rfid and student.id != staff_rfid.id:
+                return {"status": "warning", "msg": f"RFID bestaat al voor personeel {staff_rfid.naam} {staff_rfid.voornaam}"}
+        ret = dl.models.update(Staff, student, data)
+        if (ret):
+            return ret.to_dict()
+        return {"status": "warning", "msg": f"Onbekende fout"}
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return {"status": "error", "msg": f"Fout: {str(e)}"}
 
 def cron_staff_load_from_sdh(opaque=None, **kwargs):
     try:

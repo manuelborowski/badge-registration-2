@@ -28,6 +28,13 @@
     background-color: white;
 }
 
+.thick-blue-border {
+    border-radius: 10px;
+    border: 10px solid #027cff;
+    padding: 30px;
+    background-color: white;
+}
+
 .thin-green-border {
     border-radius: 10px;
     border: 2px solid #aec251;

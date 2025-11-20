@@ -5,7 +5,6 @@ import {BForms} from "../common/BForms.js";
 
 const meta = await fetch_get("overview.meta");
 
-
 const location_key = localStorage.getItem("overview-location-select");
 
 const __new_registration = (ids) => {
@@ -27,7 +26,6 @@ const __new_rfid = (ids) => {
         buttons: {ok: {label: "OK", className: "btn-primary", callback: () => __new_rfid_student = null}, cancel: {label: "Annuleer", className: "btn-warning", callback: () => __new_rfid_student = null}},
     });
 }
-
 
 const __export_balances_cb = async () => {
     const bform = new BForms(
@@ -98,7 +96,6 @@ const context_menu_items = [
 
 // called when an RFID is scanned or the state changes.
 const __serialrfid_cb = async data => {
-    console.log(data);
     if (__new_rfid_student) {
         if (data.type === "rfid") {
             const ret = await fetch_update("student.student", {rfid: data.rfid, id: __new_rfid_student.id})

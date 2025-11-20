@@ -14,7 +14,7 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
               crossorigin="anonymous">
         <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
-        <link rel="shortcut icon" href="static/img/logo.png">
+        <link rel="shortcut icon" href="static/img/{{ logo }}">
         <link href="static/css/main.css" rel="stylesheet">
         <link href="static/css/button.css" rel="stylesheet">
         <link href="static/css/filter.css" rel="stylesheet">
@@ -30,7 +30,7 @@
     <div>
         <div>
             <img src="{{ url_for('static', filename='img/warning.png') }}" alt="" height="40" style="visibility: hidden">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="" height="40">
+            <img src="static/img/{{ logo }}" alt="" height="40">
             {% if current_user.is_authenticated %}
                 <ul id="navbar"></ul>
             {% endif %}

@@ -1,11 +1,10 @@
 import {FilterMenu} from "../common/filter_menu.js";
-import {base_init} from "../base.js";
-import {fetch_get, busy_indication_off, busy_indication_on} from "../common/common.js";
+import {fetch_get, fetch_post} from "../common/common.js";
 import {rfid_serial} from "../common/rfidserial.js";
 import {ActionMenu} from "../common/action_menu.js";
 import {socketio} from "../common/socketio.js";
 import {person_image} from "../../img/base64-person.js";
-import {datatable_column2index, datatable_remove_table, datatable_rows_add, datatable_rows_delete, datatables_init} from "../datatables/dt.js";
+import {datatable_remove_table, datatable_rows_add, datatable_rows_delete, datatables_init} from "../datatables/dt.js";
 
 // location specific data, parameters and processing is done per location
 class LocationBase {
@@ -262,13 +261,16 @@ const filter_menu_items = [
 // depending of the state of the scanner, the background color is update to indicate to the user
 const action_scanner_changed = (id, value) => {
     if (value === "on") {
-        rfid_serial.connect(data => {
+        rfid_serial.connect(async data => {
             if (data.type === "state") {
                 document.getElementById('scanner').style.backgroundColor = data.value ? "#a7e3a7" : "#deb872";
+            } else if (data.type === "rfid") {
+                const ret = await fetch_post("overview.registration", {location_key: filters.location, rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
             }
         });
     } else {
         rfid_serial.disconnect();
+        document.getElementById('scanner').style.backgroundColor = "white";
     }
 }
 

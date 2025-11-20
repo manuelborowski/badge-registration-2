@@ -1,11 +1,16 @@
 class RfidSerial {
     __cb = null;
+    beep = null;
 
     constructor() {
         this.__worker = new Worker("/static/js/common/rfidserialworker.js");
         this.__worker.onmessage = (event) => {
-            if (this.__cb) this.__cb(event.data);
+            if (this.__cb) {
+                this.beep.play();
+                this.__cb(event.data);
+            }
         };
+        this.beep = new Audio("static/sound/short-censor-beep.wav")
     }
 
     // callback = {type, data...}

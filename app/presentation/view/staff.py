@@ -19,7 +19,7 @@ bp_staff = Blueprint('staff', __name__)
 def show():
     return render_template("project/staff.html")
 
-@bp_staff.route('/staff', methods=['GET'])
+@bp_staff.route('/staff', methods=['GET', "UPDATE"])
 @level_4_required
 @login_required
 def staff():
@@ -27,6 +27,9 @@ def staff():
         options = request.args.get("options")
         staffs = al.models.get(Staff, options)
         return json.dumps(staffs)
+    if request.method == "UPDATE":
+        ret = al.staff.update(json.loads(request.data))
+        return json.dumps(ret)
     return json.dumps({"status": "error", "msg": f"Methode niet ondersteund, {request.method}"})
 
 @bp_staff.route('/staff/meta', methods=['GET'])
