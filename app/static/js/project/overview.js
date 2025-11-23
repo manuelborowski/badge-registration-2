@@ -1,43 +1,119 @@
 import {FilterMenu} from "../common/filter_menu.js";
-import {fetch_get, fetch_post} from "../common/common.js";
+import {fetch_delete, fetch_get, fetch_post} from "../common/common.js";
 import {rfid_serial} from "../common/rfidserial.js";
 import {ActionMenu} from "../common/action_menu.js";
 import {socketio} from "../common/socketio.js";
 import {person_image} from "../../img/base64-person.js";
-import {datatable_remove_table, datatable_rows_add, datatable_rows_delete, datatables_init} from "../datatables/dt.js";
+import {ctx, datatable_clear_checked_boxes, datatable_remove_table, datatable_row_data_from_id, datatable_rows_add, datatable_rows_delete, datatable_update_cell, datatables_init} from "../datatables/dt.js";
+import {BForms} from "../common/BForms.js";
+import {ContextMenu} from "../common/context_menu.js";
 
 // location specific data, parameters and processing is done per location
 class LocationBase {
     table_config = {
-        title: "Overview",
-        view: "overview",
+        title: "Overview", view: "overview",
     }
 
-    base_table_template = {
-        student: [
-            {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
-            {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"},
-            {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
-            {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
-            {name: "Klas", data: "klascode", orderable: true, width: "4%", visible: "yes"},
-        ],
-        verkoop: [],
-        cellphone: [
-            {name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
-            {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
-        ],
-        toilet: [
-            {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
-        ]
-    }
+    table_template = [{name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"}, {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"}, {
+        name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"
+    }, {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"}, {name: "Klas", data: "klascode", orderable: true, width: "4%", visible: "yes"},]
+
+    context_menu_items = [
+        {level: 3, type: "item", label: "Exporteer registraties", iconscout: 'export', cb: () => this.export_registrations()},
+        {level: 3, type: "divider"}, {
+            level: 3, type: "item", label: "Registratie verwijderen", iconscout: "trash-alt", cb: ids => this.delete_registration(ids)
+        },]
 
     canvas_element = document.getElementById("canvas");
     photo_size_factor = 50;
     current_location = null;
+    prev_room = null;
 
     set location(current_location) {
         this.current_location = current_location;
         this.create_rules_cache();
+    }
+
+    export_registrations = async () => {
+        const bform = new BForms([{tag: "link", href: "static/css/form.css", rel: "stylesheet"}, {
+            format: "vertical-center", rows: [{type: "date", label: "Vanaf datum", name: "from"}, {type: "date", label: "Tot en met datum", name: "till"},]
+        }]);
+        bootbox.dialog({
+            title: "Exporteer registraties", message: bform.form, buttons: {
+                confirm: {
+                    label: "OK", className: "btn-primary", callback: async () => {
+                        const form_data = bform.get_data();
+                        window.open(`/registration/export?location=${filters.location}&from=${form_data.from}&till=${form_data.till}`, '_blank');
+                    }
+                }, cancel: {
+                    label: "Annuleer", className: "btn-secondary", callback: async () => {
+                    }
+                },
+            },
+        });
+    }
+
+    reset_counters = async () => {
+        const bform = new BForms([{tag: "link", href: "static/css/form.css", rel: "stylesheet"}, {
+            format: "vertical-center", rows: [{type: "date", label: "Tot en met datum", name: "till"},]
+        }]);
+        bootbox.dialog({
+            title: "Tellers op nul zetten", message: bform.form, buttons: {
+                confirm: {
+                    label: "OK", className: "btn-primary", callback: async () => {
+                        const form_data = bform.get_data();
+                        await fetch_post("registration.zerocounters", {location: filters.location, date: form_data.till});
+                        this.load_registrations();
+                    }
+                }, cancel: {
+                    label: "Annuleer", className: "btn-secondary", callback: async () => {
+                    }
+                },
+            },
+        });
+    }
+
+    delete_registration = async (ids) => {
+        let message = "";
+        if (filters.view_layout === "tile") {
+            message = `Wilt u de registratie van ${document.querySelector(`figure[data-id="${ids[0]}"]`).dataset.name} verwijderen?`
+        } else {
+            const registration = datatable_row_data_from_id(ids[0])
+            message = `Wilt u de registratie van ${registration.naam} ${registration.voornaam} verwijderen?`
+        }
+        bootbox.confirm(message, async result => {
+            if (result) {
+                const ret = await fetch_delete("registration.registration", {id: ids[0]});
+                if (ret.data.status) {
+                    if (filters.view_layout === "tile") {
+                        const tile = document.querySelector(`figure[data-id="${ids[0]}"]`);
+                        tile.parentNode.removeChild(tile);
+                    } else {
+                        datatable_rows_delete(ids);
+                    }
+                }
+            }
+        });
+    }
+
+    send_smartschool_message = async (ids) => {
+        let message = "";
+        if (filters.view_layout === "tile") {
+            message = `Wilt u een bericht naar ${document.querySelector(`figure[data-id="${ids[0]}"]`).dataset.name} sturen?`
+        } else {
+            if (ids.length === 1) {
+                const registration = datatable_row_data_from_id(ids[0])
+                message = `Wilt u een bericht naar ${registration.naam} ${registration.voornaam} sturen?`
+            } else {
+                message = `Wilt u bericht naar ${ids.length} studenten sturen?`
+            }
+        }
+        bootbox.confirm(message, async result => {
+            if (result) {
+                await fetch_post("registration.sendmessage", {ids});
+                datatable_clear_checked_boxes();
+            }
+        });
     }
 
     // rules (per location) define how a registration is processed; do nothing, add color, add tickbox...
@@ -81,10 +157,11 @@ class LocationBase {
         this.check_rules(data);
     }
 
-    render_list_view(registrations, extra_template) {
+    render_list_view(registrations, {extra_template = [], extra_context = []} = {}) {
         const initial_data = this.process_data_list(registrations);
-        const config = Object.assign(this.table_config, {template: this.base_table_template.student.concat(extra_template)});
-        datatables_init({config, initial_data, callbacks: {created_row: (row, data, dataIndex, cells) => this.process_created_row_callback(data)}});
+        const config = Object.assign(this.table_config, {template: this.table_template.concat(extra_template)});
+        const context_menu_items = this.context_menu_items.concat(extra_context);
+        datatables_init({config, initial_data, context_menu_items, callbacks: {created_row: (row, data, dataIndex, cells) => this.process_created_row_callback(data)}});
     }
 
     render_tile(item, prepend = false) {
@@ -107,85 +184,109 @@ class LocationBase {
         registration_container.classList.add("S" + item.leerlingnummer);
         registration_container.dataset.id = item.id;
         registration_container.dataset.name = `${item.naam} ${item.voornaam}`;
-        if (prepend)
-            this.canvas_element.prepend(registration_container);
-        else
-            this.canvas_element.appendChild(registration_container);
+        if (prepend) this.canvas_element.prepend(registration_container); else this.canvas_element.appendChild(registration_container);
     }
 
     render_tile_view(registrations) {
+        const get_tile_id = e => [e.target.closest("figure").dataset.id];
         this.canvas_element.innerHTML = "";
         for (const item of registrations) {
             this.render_tile(item);
         }
+        ctx.context_menu = new ContextMenu(document.querySelector("#canvas"), this.context_menu_items);
+        ctx.context_menu.subscribe_get_ids(get_tile_id);
     }
 
+    // Each time the page is refreshed, or the location is changed, load and process registrations
+    async load_registrations() {
+        // Used on students-page when a registration for a student is made
+        localStorage.setItem("overview-location-select", filters.location);
+        const registrations = await fetch_get("overview.overview", {...filters});
+        if (filters.view_layout === "tile") {
+            datatable_remove_table();
+            this.render_tile_view(registrations);
+        } else {
+            document.getElementById("canvas").innerHTML = "";
+            this.render_list_view(registrations);
+        }
+        // Depending on the location, the client registers to another room.  When a registration is made for a particular location, only webbrowsers subscribed on that room/location will be notified.
+        if (this.prev_room) socketio.unsubscribe_from_room(this.prev_room);
+        socketio.subscribe_to_room(filters.location);
+        this.prev_room = filters.location;
+
+    }
+
+// Called by server, via socketio, when a registration is added
+    async add_single_registration(type, data) {
+        if (filters.view_layout === "tile") {
+            this.render_tile(data, true);
+        } else {
+            data = this.process_data(data);
+            if (data.time_diff !== "") datatable_rows_delete([data.id]);
+            datatable_rows_add([data]);
+        }
+    }
+
+// Called by server, via socketio, when a registration is updated
+    async update_single_registration(type, data) {
+        if (filters.view_layout === "tile") {
+        } else {
+            datatable_update_cell(data.id,data.data, data.value);
+        }
+    }
 }
 
 class LocationCellphone extends LocationBase {
-    table_template = [
-        {name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
-        {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
+    extra_template = [{name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}}, {
+        name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"
+    },]
+
+    extra_context = [
+        {level: 3, type: "divider"},
+        {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
+        {level: 3, type: "divider"},
+        {level: 3, type: "item", label: "Stuur Smartschool bericht", iconscout: "envelope-send", cb: (ids) => this.send_smartschool_message(ids)},
     ]
 
     render_list_view(registrations) {
-        super.render_list_view(registrations, this.table_template);
+        super.render_list_view(registrations, {extra_template: this.extra_template, extra_context: this.extra_context});
     }
 }
 
 class LocationToilet extends LocationBase {
-    table_template = [
-        {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
-    ]
+    extra_template = [{name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},]
+
+    extra_context = [{level: 3, type: "divider"}, {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},]
 
     render_list_view(registrations) {
-        super.render_list_view(registrations, this.table_template);
+        super.render_list_view(registrations, {extra_template: this.extra_template, extra_context: this.extra_context});
     }
+
 }
 
-class LocationVerkoop extends LocationBase {
-    table_template = []
+class LocationVerkoop extends LocationBase {}
 
-    render_list_view(registrations) {
-        super.render_list_view(registrations, this.table_template);
-    }
-}
-
-class LocationSMS extends LocationBase {
-    table_template = []
-
-    render_list_view(registrations) {
-        super.render_list_view(registrations, this.table_template);
-    }
-}
+class LocationSMS extends LocationBase {}
 
 class LocationTimeRegistration extends LocationBase {
-    table_template = {
-        staff: [
-            {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
-            {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
-            {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
-            {name: "code", data: "code", orderable: true, width: "4%", visible: "yes"},
-            {name: "Tijd in", data: "time_in", orderable: true, width: "8%", visible: "yes"},
-            {name: "Startuur", data: "start", orderable: true, width: "4%", visible: "yes"},
-            {name: "Verschil", data: "time_in_diff", orderable: true, width: "4%", visible: "yes"},
-            {name: "Tijd uit", data: "time_out", orderable: true, width: "8%", visible: "yes"},
-            {name: "Einduur", data: "stop", orderable: true, width: "4%", visible: "yes"},
-            {name: "Verschil", data: "time_out_diff", orderable: true, width: "4%", visible: "yes"},
-            {name: "Dagverschil", data: "time_diff", orderable: true, width: "4%", visible: "yes"},
-            {name: "Opmerking", data: "info", orderable: true, width: "50%", visible: "yes", celledit: {type: "text-confirmkey"}},
-        ]
-    }
+    table_template = [
+        {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
+        {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"}, {
+        name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"
+    }, {name: "code", data: "code", orderable: true, width: "4%", visible: "yes"}, {name: "Tijd in", data: "time_in", orderable: true, width: "8%", visible: "yes"}, {
+        name: "Startuur", data: "start", orderable: true, width: "4%", visible: "yes"
+    }, {name: "Verschil", data: "time_in_diff", orderable: true, width: "4%", visible: "yes"}, {name: "Tijd uit", data: "time_out", orderable: true, width: "8%", visible: "yes"}, {
+        name: "Einduur", data: "stop", orderable: true, width: "4%", visible: "yes"
+    }, {name: "Verschil", data: "time_out_diff", orderable: true, width: "4%", visible: "yes"}, {name: "Dagverschil", data: "time_diff", orderable: true, width: "4%", visible: "yes"}, {
+        name: "Opmerking", data: "info", orderable: true, width: "50%", visible: "yes", celledit: {type: "text-confirmkey"}
+    },]
 
     process_data(data) {
         let start = "", stop = "", time_out_diff = "", time_diff = "", time_in_diff = "";
         data = super.process_data(data);
         if (data.text1 !== "") {
             const text1_array = data.text1.split(",");
-            if (text1_array.length < 3)
-                [start, time_in_diff] = [...text1_array];
-            else
-                [start, time_in_diff, stop, time_out_diff, time_diff] = [...text1_array];
+            if (text1_array.length < 3) [start, time_in_diff] = [...text1_array]; else [start, time_in_diff, stop, time_out_diff, time_diff] = [...text1_array];
         }
         return Object.assign(data, {start, stop, time_in_diff, time_out_diff, time_diff})
     }
@@ -196,13 +297,6 @@ class LocationTimeRegistration extends LocationBase {
         }
         return datas;
     }
-
-    render_list_view(registrations) {
-        const initial_data = this.process_data_list(registrations);
-        const config = Object.assign(this.table_config, {template: this.table_template.staff})
-        datatables_init({config, initial_data, callbacks: {created_row: (row, data, dataIndex, cells) => this.process_created_row_callback(data)}});
-    }
-
 }
 
 // this is updated when a filter is changed and can be used throughout the code
@@ -210,11 +304,7 @@ let filters = {location: null, view_layout: null, period: null};
 
 // a location processor is an object that contains location specific data/parameters/code
 const location_processors = {
-    "timeregistration": new LocationTimeRegistration(),
-    "cellphone": new LocationCellphone(),
-    "toilet": new LocationToilet(),
-    "verkoop": new LocationVerkoop(),
-    "sms": new LocationSMS()
+    "timeregistration": new LocationTimeRegistration(), "cellphone": new LocationCellphone(), "toilet": new LocationToilet(), "verkoop": new LocationVerkoop(), "sms": new LocationSMS()
 }
 
 let location_processor = null;
@@ -230,32 +320,14 @@ let filter_menu = null;
 const location_filter_options = Object.entries(meta.location).filter(i => i[1].access_level <= current_user.level || !i[1].access_level)
     .toSorted((a, b) => a[1].locatie.localeCompare(b[1].locatie))
     .map(([k, v]) => ({value: k, label: v.locatie}));
-const filter_menu_items = [
-    {
-        type: 'select',
-        id: 'location',
-        label: 'Locaties',
-        options: location_filter_options,
-        default: location_filter_options[0].value,
-        persistent: true,
-    },
-    {
-        type: 'select',
-        id: 'view_layout',
-        label: 'Layout',
-        options: [{value: "tile", label: "Tegel"}, {value: "list", label: "Lijst"}],
-        default: "list",
-        persistent: true
-    },
-    {
-        type: 'select',
-        id: 'period',
-        label: 'Periode',
-        options: [{value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}],
-        default: "last-week",
-        persistent: true
-    },
-]
+const filter_menu_items = [{
+    type: 'select', id: 'location', label: 'Locaties', options: location_filter_options, default: location_filter_options[0].value, persistent: true,
+}, {
+    type: 'select', id: 'view_layout', label: 'Layout', options: [{value: "tile", label: "Tegel"}, {value: "list", label: "Lijst"}], default: "list", persistent: true
+}, {
+    type: 'select', id: 'period', label: 'Periode', options: [{value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week",
+    persistent: true
+},]
 
 // The action menu is located after the filter menu and contains a pull down to enable or disable the RFID scanner
 // depending of the state of the scanner, the background color is update to indicate to the user
@@ -265,7 +337,7 @@ const action_scanner_changed = (id, value) => {
             if (data.type === "state") {
                 document.getElementById('scanner').style.backgroundColor = data.value ? "#a7e3a7" : "#deb872";
             } else if (data.type === "rfid") {
-                const ret = await fetch_post("overview.registration", {location_key: filters.location, rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
+                const ret = await fetch_post("registration.registration", {location_key: filters.location, rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
             }
         });
     } else {
@@ -275,68 +347,23 @@ const action_scanner_changed = (id, value) => {
 }
 
 let action_menu = null;
-const action_menu_items = [
-    {
-        type: 'select',
-        id: 'scanner',
-        label: 'Scanner',
-        options: [{value: "off", label: "Geen"}, {value: "on", label: "Wel"}],
-        default: "off",
-        persistent: true,
-        cb: action_scanner_changed
+const action_menu_items = [{
+    type: 'select', id: 'scanner', label: 'Scanner', options: [{value: "off", label: "Geen"}, {value: "on", label: "Wel"}], default: "off", persistent: true, cb: action_scanner_changed
 
-    },
-]
-
-// Depending on the location, the client registers to another room.  When a registration is made for a particular location, only webbrowsers subscribed on that room/location will be notified.
-let prev_room = null;
-const subscribe_to_room = () => {
-    if (prev_room) socketio.unsubscribe_from_room(prev_room);
-    socketio.subscribe_to_room(filters.location);
-    prev_room = filters.location;
-}
-
-// Each time the page is refreshed, or the location is changed, load and process registrations
-const load_registrations = async () => {
-    // Used on students-page when a registration for a student is made
-    localStorage.setItem("overview-location-select", filters.location);
-    const registrations = await fetch_get("overview.overview", {...filters});
-    if (filters.view_layout === "tile") {
-        datatable_remove_table();
-        location_processor.render_tile_view(registrations);
-    } else {
-        document.getElementById("canvas").innerHTML = "";
-        location_processor.render_list_view(registrations);
-    }
-    // each location has it own socketio-room.  This prevents socketio calls to browsers that display a different location.
-    subscribe_to_room();
-}
-
-// Called by server, via socketio, when a registration is added
-const add_single_registration = async (type, data) => {
-    if (filters.view_layout === "tile") {
-        location_processor.render_tile(data, true);
-    } else {
-        data = location_processor.process_data(data);
-        if (data.time_diff !== "") datatable_rows_delete([data.id]);
-        datatable_rows_add([data]);
-    }
-}
+},]
 
 // Called each time a filter (location, layout...) has changed
 const filter_changed_cb = async (id, value) => {
     filters[id] = value;
     set_location_processor();
-    load_registrations();
-    subscribe_to_room();
+    location_processor.load_registrations();
 }
 
 // Called once when the page is loaded
 const default_actions = () => {
     action_scanner_changed('scanner', document.getElementById('scanner').value);
     set_location_processor();
-    load_registrations();
-    subscribe_to_room();
+    location_processor.load_registrations();
 }
 
 $(document).ready(async function () {
@@ -344,6 +371,7 @@ $(document).ready(async function () {
     filters = Object.fromEntries(filter_menu.filters.map(f => [f.id, f.value])); // default filter values
     action_menu = new ActionMenu(document.querySelector(".filter-menu-placeholder"), action_menu_items, "overview");
     default_actions();
-    socketio.subscribe_on_receive("add-registration", add_single_registration);
+    socketio.subscribe_on_receive("add-registration", (type, data) => location_processor.add_single_registration(type, data));
+    socketio.subscribe_on_receive("update-registration", (type, data) => location_processor.update_single_registration(type, data));
 });
 

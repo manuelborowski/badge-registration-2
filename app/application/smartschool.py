@@ -1,5 +1,6 @@
 from app import app
 from zeep import Client
+import inspect
 
 #logging on file level
 import logging, sys
@@ -8,7 +9,6 @@ log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 
 soap = Client(app.config["SS_API_URL"])
-
 
 def send_message(to, sender, subject, body, account=0, enable_sending=True):
     try:

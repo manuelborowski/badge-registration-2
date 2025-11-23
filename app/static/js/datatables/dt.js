@@ -33,7 +33,7 @@ function checkbox_is_at_least_one_selected() {
 
 export function checkbox_get_ids() {return Array.from(document.querySelectorAll(".chbx_all:checked")).map(c => c.value);}
 
-export function clear_checked_boxes() {
+export function datatable_clear_checked_boxes() {
     $(".chbx_all").prop('checked', false);
     $("#select_all").prop('checked', false);
 }

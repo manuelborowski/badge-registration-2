@@ -40,25 +40,3 @@ def meta():
         "location": location,
     })
 
-@bp_staff.route('/staff/registration', methods=["POST"])
-@level_4_required
-@login_required
-def registration():
-    if request.method == "POST":
-        params = json.loads(request.data)
-        ret = al.registration.registration_add(params)
-        return json.dumps(ret)
-    log.error(f'{inspect.currentframe().f_code.co_name}:  incorrect request method {request.method}')
-    return json.dumps({"status": "error", "msg": f"Verkeerde request methode: {request.method}"})
-
-@bp_staff.route('/staff/rfid', methods=["POST"])
-@level_4_required
-@login_required
-def rfid():
-    if request.method == "POST":
-        params = json.loads(request.data)
-        ret = al.registration.registration_add(params)
-        return json.dumps(ret)
-    log.error(f'{inspect.currentframe().f_code.co_name}:  incorrect request method {request.method}')
-    return json.dumps({"status": "error", "msg": f"Verkeerde request methode: {request.method}"})
-

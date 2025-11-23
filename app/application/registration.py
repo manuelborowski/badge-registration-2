@@ -4,7 +4,7 @@ from app import app, data as dl, application as al
 from app.application.smartschool import send_message as ss_send_message
 from flask import make_response
 from app.application.sms import send_sms
-from app.data.models import get, get_m, commit, update, update_m, add, add_m, delete_m
+from app.data.models import get, get_m, commit, update, update_m, add, add_m, delete_m, delete, commit
 from app.data.student import Student
 from app.data.staff import Staff
 from app.data.registration import Registration
@@ -165,38 +165,42 @@ def registration_add(params):
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": f"Foutmelding: {e}"}
 
-def registration_delete(ids):
+# delete a single registration.  Check for later registrations (same person and location) and if applicable (sms, cellphone, ...) adjust the "aantal_items" counter to make sure they reflect the correct status.
+def registration_delete(id):
     try:
-        delete_m(Registration, ids)
-        ret = {
-            "status": True,
-            "action": "delete",
-            "data": [{"id": id} for id in ids]
-        }
-        return ret
+        registration = get(Registration, ("id", "=", id))
+        if registration:
+            later_registrations = get_m(Registration, [("time_in", ">", registration.time_in), ("location", "=", registration.location), ("person_id", "=", registration.person_id)])
+            for later_registration in later_registrations:
+               if later_registration.aantal_items > 1:
+                   later_registration.aantal_items -= 1
+            commit()
+            delete(Registration, id)
+            return {"status": "ok", "msg": f"Registratie verwijderd", "data": {"status": True}}
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": f"Fout, {str(e)}"}
+        return {"status": "error", "msg": f"Fout, {str(e)}"}
 
 def registration_zero_counters(location, date):
     try:
-        registrations = get_m(Registration, [("location", "=", location), ("time_in", "<", date)])
+        date = f"{date} 23:59" # consider the end of the day, else the <= below does not work properly
+        registrations = get_m(Registration, [("location", "=", location), ("time_in", "<=", date)])
         for registration in registrations:
             registration.active = False
-        registrations = get_m(Registration, [("location", "=", location), ("time_in", ">=", date)])
+        registrations = get_m(Registration, [("location", "=", location), ("time_in", ">", date)])
         aantal_items_cache = {}
         for registration in registrations:
-            if registration.leerlingnummer in aantal_items_cache:
-                registration.aantal_items -= aantal_items_cache[registration.leerlingnummer]
+            if registration.person_id in aantal_items_cache:
+                registration.aantal_items -= aantal_items_cache[registration.person_id]
             else:
-                aantal_items_cache[registration.leerlingnummer] = registration.aantal_items - 1
+                aantal_items_cache[registration.person_id] = registration.aantal_items - 1
                 registration.aantal_items = 1
         commit()
-        ret = {"status": True, "data": "Ok, tellers zijn op nul gezet"}
+        ret = {"status": "ok", "msg": "tellers zijn op nul gezet"}
         return ret
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": f"Fout, {str(e)}"}
+        return {"status": "error", "msg": f"Fout, {str(e)}"}
 
 # filters priority (high to low)
 # search
@@ -405,28 +409,26 @@ def api_registration_update(location_key, ids, fields):
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": False, "data": str(e)}
 
-def api_registration_send_message(ids, location_key):
+def registration_send_message(ids):
     try:
         location_settings = get_configuration_setting("location-profiles")
-        if location_key not in location_settings:
-            log.info(f'{inspect.currentframe().f_code.co_name}:  {location_key} is not valid')
-            return {"status": False, "data": f"Locatie {location_key} is niet geldig"}
-        location = location_settings[location_key]
         data = []
         for id in ids:
             registration = get(Registration, ("id", "=", id))
-            student = get(Student, [("leerlingnummer", "=", registration.leerlingnummer)])
+            location = location_settings[registration.location]
+            student = get(Student, [("leerlingnummer", "=", registration.person_id)])
             if student:
                 if location["type"] == "sms":
                     data.append({"id": id, "sms_sent": __send_sms(registration, location, student)})
-                if location["type"] == "cellphone":
-                    data.append({"id": id, "ss_message_sent": __send_ss_message(registration, location, student)})
+                elif location["type"] == "cellphone":
+                    if __send_ss_message(registration, location, student):
+                        al.socketio.send_to_room({"type": "update-registration", "data": {"id": registration.id, "data": "flag1", "value": True} }, registration.location)
             else:
                 log.error(f'{inspect.currentframe().f_code.co_name}: could not find student fore registration {id}')
-        return {"status": True, "data": data}
+        return {"status": "ok", "msg": "Berichten verstuurd"}
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": str(e)}
+        return {"status": "error", "msg": str(e)}
 
 def api_registration_delete(ids):
     try:
@@ -605,7 +607,8 @@ def __send_ss_message(registration, location, student, force=False):
             log.info(f'{inspect.currentframe().f_code.co_name}: Smartschool ({location["locatie"]}), {student.naam} {student.voornaam} at {registration.time_in}')
         else:
             log.info(f'{inspect.currentframe().f_code.co_name}: Smartschool ({location["locatie"]}), {student.naam} {student.voornaam} NOT sent')
-        return registration.flag1
+            return False
+        return True
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return False
@@ -691,6 +694,7 @@ def registration_export(location_key, start_date, stop_date):
                 item = {"naam": student.naam, "voornaam": student.voornaam, "klas": student.klascode, "leerlingnummer": student.leerlingnummer, "tijd": str(registration.time_in)}
                 if location["type"] == "cellphone":
                     item.update({"bericht-gestuurd": "JA" if registration.flag1 else "NEE"})
+                    item.update({"aantal": registration.aantal_items})
                 elif location["type"] == "sms":
                     item.update({"bevestigd": "JA" if registration.flag1 else "NEE"})
                     item.update({"sms-gestuurd": "JA" if registration.flag2 else "NEE"})

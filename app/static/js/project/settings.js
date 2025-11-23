@@ -9,6 +9,12 @@ const template =
             type: "container", label: "Templates", save: true, default_collapsed: true, rows: [
                 {label: "Gebruikers", name: "user-datatables-template", type: "textarea"},
                 {label: "Studenten", name: "student-datatables-template", type: "textarea"},
+                {label: "Smartschool berichten (HTML)", name: "smartschool-message-templates", type: "textarea"},
+                {type: "div", innerHTML: "Smartschool bericht variabelen:<br>%%NAAM%%\n" +
+                        "<br>%%VOORNAAM%%\n" +
+                        "<br>%%TIJD%%\n" +
+                        "<br>%%KLAS%%\n" +
+                        "<br>%%AANTAL-OVERTREDINGEN%%"},
             ]
         },
         {
@@ -32,6 +38,7 @@ const template =
                     type: "container", label: "Locaties", save: true, default_collapsed: true, rows: [
                         {label: "Locaties (YAML)", name: "location-profiles", type: "textarea"},
                         {label: "Artikelen (YAML)", name: "artikel-profiles", type: "textarea"},
+                        {label: "Smartschool account ids (YAML)", name: "ss-internal-numbers", type: "textarea"},
                     ]
                 },
                 {

@@ -41,14 +41,3 @@ def overview():
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {'status': "error", 'msg': str(e)}
-
-@bp_overview.route('/overview/registration', methods=["POST"])
-@login_required
-def registration():
-    if request.method == "POST":
-        params = json.loads(request.data)
-        ret = al.registration.registration_add(params)
-        return json.dumps(ret)
-    log.error(f'{inspect.currentframe().f_code.co_name}:  incorrect request method {request.method}')
-    return json.dumps({"status": "error", "msg": f"Verkeerde request methode: {request.method}"})
-

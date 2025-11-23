@@ -25,3 +25,5 @@ def auto_login():
             reload_page_moments = app.config["RELOAD_PAGE_MOMENTS"]
             return render_template('project/timeregistration.html', reload_page_moments=reload_page_moments)
     return render_template_string("<h1>Verboden toegang</h1>")
+
+

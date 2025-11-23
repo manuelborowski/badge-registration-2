@@ -6,7 +6,7 @@ class RfidSerial {
         this.__worker = new Worker("/static/js/common/rfidserialworker.js");
         this.__worker.onmessage = (event) => {
             if (this.__cb) {
-                this.beep.play();
+                if (event.data.type === "rfid") this.beep.play();
                 this.__cb(event.data);
             }
         };

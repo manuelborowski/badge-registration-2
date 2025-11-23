@@ -94,6 +94,7 @@ default_configuration_settings = {
 
     'user-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
     'student-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
+    'smartschool-message-templates': ("", Settings.SETTING_TYPE.E_STRING),
 
     'cron-scheduler-template': ('', Settings.SETTING_TYPE.E_STRING),
     'cron-enable-modules': ({}, Settings.SETTING_TYPE.E_JSON),
@@ -104,6 +105,7 @@ default_configuration_settings = {
 
     'location-profiles': ({}, Settings.SETTING_TYPE.E_YAML),
     'artikel-profiles': ({}, Settings.SETTING_TYPE.E_YAML),
+    'ss-internal-numbers': ('', Settings.SETTING_TYPE.E_YAML),
 }
 
 def get_configuration_settings(convert_to_string=False):

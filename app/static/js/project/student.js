@@ -11,7 +11,7 @@ const __new_registration = (ids) => {
     const student = datatable_row_data_from_id(ids[0]);
     bootbox.confirm(`Registratie: ${meta.location[location_key].locatie}<br>Voor: ${student.naam} ${student.voornaam}`, async result => {
         if (result) {
-            const ret = await fetch_post("student.registration", {location_key, leerlingnummer: student.leerlingnummer});
+            await fetch_post("registration.registration", {location_key, leerlingnummer: student.leerlingnummer});
         }
     });
 }

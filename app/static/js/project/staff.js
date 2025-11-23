@@ -9,7 +9,7 @@ const __new_registration = (ids) => {
     const staff = datatable_row_data_from_id(ids[0]);
     bootbox.confirm(`Registratie: ${meta.location[location_key].locatie}<br>Voor: ${staff.naam} ${staff.voornaam}`, async result => {
         if (result) {
-            const ret = await fetch_post("staff.registration", {location_key, rfid: staff.rfid});
+            const ret = await fetch_post("registration.registration", {location_key, rfid: staff.rfid});
         }
     });
 }

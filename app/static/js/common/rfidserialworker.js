@@ -103,7 +103,6 @@ class RfidSerialWorker {
 
 const worker = new RfidSerialWorker()
 onmessage = (event) => {
-    console.log(event);
     if (event.data.type === "connect") worker.connect();
     if (event.data.type === "disconnect") worker.disconnect();
 };

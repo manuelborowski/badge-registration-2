@@ -17,8 +17,9 @@ from typing import Callable
 # 0.4: implemented heartbeat
 # 0.5: overview works
 # 0.6: aesthetical udpates.  Added timeregistration, a seperate page with autologin to set up as a terminal.  Integrated RFID scanner
+# 0.7: added generic registration view.  Overview, updated context menu.  Added export registrations and send smartschool message.  Moved functions in LocationBase
 
-version = "0.6"
+version = "0.7"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
@@ -114,7 +115,7 @@ ap_scheduler.init_app(app)
 ap_scheduler.start()
 
 # Should be last to avoid circular import
-from app.presentation.view import auth, api, user, settings, overview, student, staff, timeregistration
+from app.presentation.view import auth, api, user, settings, overview, student, staff, timeregistration, registration
 app.register_blueprint(auth.bp_auth)
 app.register_blueprint(api.bp_api)
 app.register_blueprint(user.bp_user)
@@ -123,4 +124,5 @@ app.register_blueprint(overview.bp_overview)
 app.register_blueprint(student.bp_student)
 app.register_blueprint(staff.bp_staff)
 app.register_blueprint(timeregistration.bp_timeregistration)
+app.register_blueprint(registration.bp_registration)
 

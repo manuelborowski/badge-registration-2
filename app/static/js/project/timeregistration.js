@@ -45,7 +45,7 @@ const __scanner_init = () => {
     rfid_serial.connect(async data => {
         if (data.type === "state") {
         } else if (data.type === "rfid") {
-            const ret = await fetch_post("overview.registration", {location_key: "timeregistration", rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
+            await fetch_post("registration.registration", {location_key: "timeregistration", rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
         }
     });
 

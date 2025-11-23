@@ -83,6 +83,20 @@ def update_m(model, data=None, timestamp=False):
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None
 
+def delete(model, id=None, obj=None):
+    try:
+        if obj:
+                db.session.delete(obj)
+        if id:
+            obj = model.query.filter(model.id==id).first()
+            if obj:
+                db.session.delete(obj)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+    return None
+
 def delete_m(model, ids=None, objs=None):
     if objs is None:
         objs = []
@@ -99,6 +113,16 @@ def delete_m(model, ids=None, objs=None):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+    return None
+
+def get(model, filters=None, order_by=None):
+    if filters is None:
+        filters = []
+    try:
+        obj = get_m(model, filters, order_by=order_by, first=True)
+        return obj
+    except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
     return None
 
@@ -161,16 +185,6 @@ def get_m(model, filters=None, fields=None, order_by=None, first=False, count=Fa
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         raise e
-
-def get(model, filters=None, order_by=None):
-    if filters is None:
-        filters = []
-    try:
-        obj = get_m(model, filters, order_by=order_by, first=True)
-        return obj
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-    return None
 
 def get_columns(model):
     return [p for p in dir(model) if not p.startswith('_')]
