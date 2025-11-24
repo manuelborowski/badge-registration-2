@@ -20,8 +20,9 @@ from typing import Callable
 # 0.7: added generic registration view.  Overview, updated context menu.  Added export registrations and send smartschool message.  Moved functions in LocationBase
 # 0.8: small aesthetic updates.
 # 0.9: small updates
+# 0.10: student new rfid -> push to SDH
 
-version = "0.9"
+version = "0.10"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
