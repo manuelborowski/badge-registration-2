@@ -16,7 +16,7 @@ class LocationBase {
     }
 
     table_template = [
-        {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
+        {name: "row_action", data: "row_action", orderable: false, width: "1%", visible: "always"},
         {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"},
         {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
         {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
@@ -162,11 +162,10 @@ class LocationBase {
         this.check_rules(data);
     }
 
-    render_list_view(registrations, {extra_template = [], extra_context = []} = {}) {
+    render_list_view(registrations) {
         const initial_data = this.process_data_list(registrations);
-        const config = Object.assign(this.table_config, {template: this.table_template.concat(extra_template)});
-        const context_menu_items = this.context_menu_items.concat(extra_context);
-        datatables_init({config, initial_data, context_menu_items, callbacks: {created_row: (row, data, dataIndex, cells) => this.process_created_row_callback(data)}});
+        const config = Object.assign(this.table_config, {template: this.table_template});
+        datatables_init({config, initial_data, context_menu_items: this.context_menu_items, callbacks: {created_row: (row, data, dataIndex, cells) => this.process_created_row_callback(data)}});
     }
 
     render_tile(item, prepend = false) {
@@ -180,7 +179,8 @@ class LocationBase {
         image.src = src;
         image.width = (2 * this.photo_size_factor).toString();
         let figcaption = document.createElement("figcaption");
-        figcaption.innerHTML = "(" + item.time_in.split(" ")[1] + ") " + item.klascode + "<br>" + item.naam + " " + item.voornaam;
+        const timestamp = item.time_in.substring(8, 10) + "/" + item.time_in.substring(5, 7) + " " + item.time_in.substring(11, 17);
+        figcaption.innerHTML = "(" + timestamp + ") " + item.klascode + "<br>" + item.naam + " " + item.voornaam;
         figcaption.style.fontSize = (1.5 * this.photo_size_factor / 100).toString() + "rem";
         figcaption.style.fontWeight = "bold";
         figcaption.style.textAlign = "center";
@@ -237,41 +237,42 @@ class LocationBase {
     async update_single_registration(type, data) {
         if (filters.view_layout === "tile") {
         } else {
-            datatable_update_cell(data.id,data.data, data.value);
+            datatable_update_cell(data.id, data.data, data.value);
         }
     }
 }
 
 class LocationCellphone extends LocationBase {
-    extra_template = [
+    table_config = Object.assign(this.table_config, {width: "40%"});
+
+    table_template = this.table_template.concat([
         {name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
         {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
-    ]
+    ])
 
-    extra_context = [
+    context_menu_items = this.context_menu_items.concat([
         {level: 3, type: "divider"},
         {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
         {level: 3, type: "divider"},
         {level: 3, type: "item", label: "Stuur Smartschool bericht", iconscout: "envelope-send", cb: (ids) => this.send_smartschool_message(ids)},
-    ]
-
-    render_list_view(registrations) {
-        super.render_list_view(registrations, {extra_template: this.extra_template, extra_context: this.extra_context});
-    }
+    ])
 }
 
 class LocationToilet extends LocationBase {
-    extra_template = [{name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},]
+    table_config = Object.assign(this.table_config, {width: "40%"});
 
-    extra_context = [{level: 3, type: "divider"}, {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},]
+    table_template = this.table_template.concat([
+        {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
+    ])
 
-    render_list_view(registrations) {
-        super.render_list_view(registrations, {extra_template: this.extra_template, extra_context: this.extra_context});
-    }
-
+    context_menu_items = this.context_menu_items.concat([
+        {level: 3, type: "divider"}, {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
+    ])
 }
 
-class LocationVerkoop extends LocationBase {}
+class LocationVerkoop extends LocationBase {
+    table_config = Object.assign(table_config, {width: "40%"});
+}
 
 class LocationSMS extends LocationBase {}
 
@@ -333,7 +334,10 @@ const location_filter_options = Object.entries(meta.location).filter(i => i[1].a
 const filter_menu_items = [
     {type: 'select', id: 'location', label: 'Locaties', options: location_filter_options, default: location_filter_options[0].value, persistent: true,},
     {type: 'select', id: 'view_layout', label: 'Layout', options: [{value: "tile", label: "Tegel"}, {value: "list", label: "Lijst"}], default: "list", persistent: true},
-    {type: 'select', id: 'period', label: 'Periode', options: [{value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week", persistent: true},
+    {
+        type: 'select', id: 'period', label: 'Periode',
+        options: [{value: "today", label: "Vandaag"}, {value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week", persistent: true
+    },
 ]
 
 // The action menu is located after the filter menu and contains a pull down to enable or disable the RFID scanner

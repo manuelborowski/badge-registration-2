@@ -19,8 +19,9 @@ from typing import Callable
 # 0.6: aesthetical udpates.  Added timeregistration, a seperate page with autologin to set up as a terminal.  Integrated RFID scanner
 # 0.7: added generic registration view.  Overview, updated context menu.  Added export registrations and send smartschool message.  Moved functions in LocationBase
 # 0.8: small aesthetic updates.
+# 0.9: small updates
 
-version = "0.8"
+version = "0.9"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

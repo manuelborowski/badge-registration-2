@@ -209,8 +209,8 @@ def registration_get(location_key=None, view_layout=None, period=None):
         ret = []
         time_low = time_high = None
         flag1 = flag2 = None
-        if period in ["last-2-months", "last-4-months", "last-week"]:
-            delta = 60 if period == "last-2-months" else 120 if period == "last-4-months" else 7
+        if period in ["last-2-months", "last-4-months", "last-week", "today"]:
+            delta = 60 if period == "last-2-months" else 120 if period == "last-4-months" else 7 if period == "last-week" else 1
             time_low = datetime.datetime.now() - datetime.timedelta(days=delta)
         if "table" in location and location["table"] == "staff":
             # Staff specific data

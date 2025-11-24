@@ -197,7 +197,7 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         columns: ctx.config.template,
         language: {url: "static/datatables/dutch.json"},
         layout: {
-            topStart: ["pageLength", "paging", "info"],
+            topStart: ["info"],
             topEnd: "search",
             bottomStart: ["pageLength", "paging"],
             bottomEnd: null
