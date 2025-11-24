@@ -18,8 +18,9 @@ from typing import Callable
 # 0.5: overview works
 # 0.6: aesthetical udpates.  Added timeregistration, a seperate page with autologin to set up as a terminal.  Integrated RFID scanner
 # 0.7: added generic registration view.  Overview, updated context menu.  Added export registrations and send smartschool message.  Moved functions in LocationBase
+# 0.8: small aesthetic updates.
 
-version = "0.7"
+version = "0.8"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
@@ -49,7 +50,6 @@ log.addHandler(log_handler)
 
 # if the log-error-message is FLUSH-TO-EMAIL, all error logs are emailed and the buffer is cleared.
 email_log_handler: Callable
-
 
 def subscribe_email_log_handler_cb(cb):
     global email_log_handler

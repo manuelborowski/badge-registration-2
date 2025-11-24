@@ -1,4 +1,4 @@
-__all__ = ["api", "auth", "user"]
+__all__ = ["api", "auth", "user", "fetch_return_error", "level_2_required", "level_3_required", "level_4_required", "level_5_required"]
 
 import json
 from flask_login import current_user

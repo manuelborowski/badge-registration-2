@@ -1,9 +1,9 @@
 import {ActionMenu} from "./common/action_menu.js";
-import {menu} from "./project/menu.js";
+import {navigation_menu} from "./project/navigation_menu.js";
 import {check_server_alive} from "./common/common.js";
 
 export const inject_menu = new_menu => {
-    menu = new_menu;
+    navigation_menu = new_menu;
 }
 
 export const base_init = ({action_menu_items = []}) => {
@@ -14,7 +14,7 @@ export const base_init = ({action_menu_items = []}) => {
     navbar_element.innerHTML = "";
     let dd_ctr = 0;
 
-    for (const item of menu) {
+    for (const item of navigation_menu) {
         if (current_user.level >= item.userlevel) {
             const li = document.createElement("li");
             if ("dropdown" in item) {

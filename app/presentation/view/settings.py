@@ -8,7 +8,7 @@ import json, inspect
 
 # logging on file level
 import logging
-from app import MyLogFilter, top_log_handle, app
+from app import MyLogFilter, top_log_handle
 
 log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
@@ -19,8 +19,7 @@ bp_settings = Blueprint('settings', __name__)
 @login_required
 @level_5_required
 def show():
-    cron_module_enable_settings = dl.settings.get_configuration_setting('cron-enable-modules')
-    return render_template('project/settings.html', data=[])
+    return render_template('settings.html')
 
 
 @bp_settings.route('/setting', methods=['GET', 'UPDATE'])

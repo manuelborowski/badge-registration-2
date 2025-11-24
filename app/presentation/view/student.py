@@ -1,9 +1,8 @@
 from flask import Blueprint, render_template, request, send_file
 from flask_login import login_required
 from app.data.datatables import DatatableConfig
-from app.data.student import Student
 from app import data as dl, application as al
-from app.presentation.view import datatable_get_data, fetch_return_error, level_3_required
+from app.presentation.view import datatable_get_data, level_3_required
 from app.data.settings import get_configuration_setting
 import json, inspect, io
 

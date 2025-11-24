@@ -202,11 +202,6 @@ def registration_zero_counters(location, date):
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": f"Fout, {str(e)}"}
 
-# filters priority (high to low)
-# search
-# sms/cellphone specific
-# period
-
 def registration_get(location_key=None, view_layout=None, period=None):
     try:
         locations = get_configuration_setting("location-profiles")
@@ -351,64 +346,6 @@ def papercut_export(type):
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return f"error: {str(e)}", "error.txt"
 
-def api_schoolrekening_get(options):
-    try:
-        _, filters, _, _ = app.application.models.process_options(options)
-        artikel = [v for k, o, v in filters if k == "artikel"][0]
-        filters = [(k, o, v) for k, o, v in filters if k != "artikel"]
-        locations = get_configuration_setting("location-profiles")
-        artikel_profiel = get_configuration_setting("artikel-profiles")[artikel]
-        location_keys = [k for k, v in locations.items() if v["type"] == "verkoop" and v["artikel"] == artikel]
-        data_out = []
-        leerlingnummers = {}
-        for key in location_keys:
-            filters.append(("location", "=", key))
-            registrations = get_m(Registration, filters)
-            for item in registrations:
-                if item.leerlingnummer in leerlingnummers:
-                    leerlingnummers[item.leerlingnummer] += 1
-                else:
-                    leerlingnummers[item.leerlingnummer] = 1
-            filters = filters[:-1]
-        info = artikel_profiel["info"]
-        prijs_per_item = artikel_profiel["prijs-per-item"]
-        for leerlingnummer, nbr in leerlingnummers.items():
-            data_out.append({"leerlingnummer": leerlingnummer, "info": info.replace("$aantal$", str(nbr)), "bedrag": prijs_per_item * nbr / 100})
-        return {"status": True, "data": data_out}
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": str(e)}
-
-def api_registration_update(location_key, ids, fields):
-    try:
-        location_settings = get_configuration_setting("location-profiles")
-        if location_key not in location_settings:
-            log.info(f'{inspect.currentframe().f_code.co_name}:  {location_key} is not valid')
-            return {"status": False, "data": f"Locatie {location_key} is niet geldig"}
-        location = location_settings[location_key]
-        data = []
-        for id in ids:
-            registration = get(Registration, ("id", "=", id))
-            new_fields = {}
-            item = {}
-            if location["type"] == "sms":
-                if "remark" in fields:
-                    new_fields["text1"] = fields["remark"]
-                    item["remark"] = fields["remark"]
-                if "remark_ack" in fields:
-                    new_fields["flag1"] = fields["remark_ack"]
-                    item["remark_ack"] = fields["remark_ack"]
-                if item:
-                    item["id"] = id
-                    data.append(item)
-                update(Registration, registration, new_fields)
-            else:
-                update(Registration, registration, fields)
-        return {"status": True, "data": data}
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": str(e)}
-
 def registration_send_message(ids):
     try:
         location_settings = get_configuration_setting("location-profiles")
@@ -429,85 +366,6 @@ def registration_send_message(ids):
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": "error", "msg": str(e)}
-
-def api_registration_delete(ids):
-    try:
-        ret = registration_delete(ids)
-        return ret
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": str(e)}
-
-def api_schoolrekening_artikels_get():
-    try:
-        artikels = get_configuration_setting("artikel-profiles")
-        return {"status": True, "data": [k for k, _ in artikels.items()]}
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return {"status": False, "data": str(e)}
-
-def api_schoolrekening_info():
-    info_page = get_configuration_setting("api-schoolrekening-info")
-    return info_page
-
-# sync registrations from remote (client) into local (server-database).
-def sync_registrations_server(data):
-    try:
-        nbr_doubles = 0
-        new_registrations = []
-        if data:
-            registrations = []
-            for d in data:
-                try:
-                    r0 = datetime.datetime.strptime(d[0], "%Y-%m-%d %H:%M:%S")
-                except:
-                    r0 = None
-                try:
-                    r1 = datetime.datetime.strptime(d[1], "%Y-%m-%d %H:%M:%S")
-                except:
-                    r1 = None
-                registrations.append([r0, r1, d[2], d[3]])
-            registrations = sorted(registrations, key=lambda x: x[0])
-            oldest = registrations[0]
-            log.info(f"Oldest, {oldest}")
-            db_registrations = get_m(Registration, [("time_in", ">=", oldest[0])])
-            db_cache = {str(d.time_in) + d.leerlingnummer + d.location: d for d in db_registrations}
-
-            locations = get_configuration_setting("location-profiles")
-            artikels = get_configuration_setting("artikel-profiles")
-            location2ppi = {}
-            for location, data in locations.items():
-                price_per_item = int(artikels[data["artikel"]]["prijs-per-item"]) if "artikel" in data else 0
-                location2ppi[location] = price_per_item
-
-            for registration in registrations:
-                key = str(registration[0]) + registration[2] + registration[3]
-                if key in db_cache:
-                    log.info(f'{inspect.currentframe().f_code.co_name}: registration already present, {registration}')
-                    nbr_doubles += 1
-                    continue
-                new_registrations.append({"leerlingnummer": registration[2], "location": registration[3], "time_in": registration[0], "time_out": registration[1], "prijs_per_item": location2ppi[registration[3]]})
-            add_m(Registration, new_registrations)
-        return len(new_registrations), nbr_doubles
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return 0, 0
-
-# get registrations from local client database and send to remote server
-def sync_registrations_client():
-    try:
-        registrations = get_m(Registration)
-        data = [[str(r.time_in), str(r.time_out), r.leerlingnummer, r.location] for r in registrations]
-        ret = requests.post(f"{app.config['SYNC_REGISTRATIONS_URL']}/api/sync/registrations/data", headers={'x-api-key': app.config["SYNC_REGISTRATIONS_KEY"]}, json={"data": data})
-        if ret.status_code == 200:
-            res = ret.json()
-            if res["status"]:
-                delete_m(Registration, objs=registrations)
-                return res["data"]["nbr_new"], res["data"]["nbr_doubles"]
-        return 0, 0
-    except Exception as e:
-        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
-        return 0, 0
 
 def __send_sms(registration, location, student, force=False):
     try:
@@ -716,5 +574,105 @@ def registration_export(location_key, start_date, stop_date):
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"data": f"Fout: {e}"}
+
+def api_schoolrekening_artikels_get():
+    try:
+        artikels = get_configuration_setting("artikel-profiles")
+        return {"status": True, "data": [k for k, _ in artikels.items()]}
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return {"status": False, "data": str(e)}
+
+def api_schoolrekening_info():
+    info_page = get_configuration_setting("api-schoolrekening-info")
+    return info_page
+
+def api_schoolrekening_get(options):
+    try:
+        _, filters, _, _ = app.application.models.process_options(options)
+        artikel = [v for k, o, v in filters if k == "artikel"][0]
+        filters = [(k, o, v) for k, o, v in filters if k != "artikel"]
+        locations = get_configuration_setting("location-profiles")
+        artikel_profiel = get_configuration_setting("artikel-profiles")[artikel]
+        location_keys = [k for k, v in locations.items() if v["type"] == "verkoop" and v["artikel"] == artikel]
+        data_out = []
+        leerlingnummers = {}
+        for key in location_keys:
+            filters.append(("location", "=", key))
+            registrations = get_m(Registration, filters)
+            for item in registrations:
+                if item.leerlingnummer in leerlingnummers:
+                    leerlingnummers[item.leerlingnummer] += 1
+                else:
+                    leerlingnummers[item.leerlingnummer] = 1
+            filters = filters[:-1]
+        info = artikel_profiel["info"]
+        prijs_per_item = artikel_profiel["prijs-per-item"]
+        for leerlingnummer, nbr in leerlingnummers.items():
+            data_out.append({"leerlingnummer": leerlingnummer, "info": info.replace("$aantal$", str(nbr)), "bedrag": prijs_per_item * nbr / 100})
+        return {"status": True, "data": data_out}
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return {"status": False, "data": str(e)}
+
+# sync registrations from remote (client) into local (server-database).
+def sync_registrations_server(data):
+    try:
+        nbr_doubles = 0
+        new_registrations = []
+        if data:
+            registrations = []
+            for d in data:
+                try:
+                    r0 = datetime.datetime.strptime(d[0], "%Y-%m-%d %H:%M:%S")
+                except:
+                    r0 = None
+                try:
+                    r1 = datetime.datetime.strptime(d[1], "%Y-%m-%d %H:%M:%S")
+                except:
+                    r1 = None
+                registrations.append([r0, r1, d[2], d[3]])
+            registrations = sorted(registrations, key=lambda x: x[0])
+            oldest = registrations[0]
+            log.info(f"Oldest, {oldest}")
+            db_registrations = get_m(Registration, [("time_in", ">=", oldest[0])])
+            db_cache = {str(d.time_in) + d.leerlingnummer + d.location: d for d in db_registrations}
+
+            locations = get_configuration_setting("location-profiles")
+            artikels = get_configuration_setting("artikel-profiles")
+            location2ppi = {}
+            for location, data in locations.items():
+                price_per_item = int(artikels[data["artikel"]]["prijs-per-item"]) if "artikel" in data else 0
+                location2ppi[location] = price_per_item
+
+            for registration in registrations:
+                key = str(registration[0]) + registration[2] + registration[3]
+                if key in db_cache:
+                    log.info(f'{inspect.currentframe().f_code.co_name}: registration already present, {registration}')
+                    nbr_doubles += 1
+                    continue
+                new_registrations.append({"leerlingnummer": registration[2], "location": registration[3], "time_in": registration[0], "time_out": registration[1], "prijs_per_item": location2ppi[registration[3]]})
+            add_m(Registration, new_registrations)
+        return len(new_registrations), nbr_doubles
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return 0, 0
+
+# get registrations from local client database and send to remote server
+def sync_registrations_client():
+    try:
+        registrations = get_m(Registration)
+        data = [[str(r.time_in), str(r.time_out), r.leerlingnummer, r.location] for r in registrations]
+        ret = requests.post(f"{app.config['SYNC_REGISTRATIONS_URL']}/api/sync/registrations/data", headers={'x-api-key': app.config["SYNC_REGISTRATIONS_KEY"]}, json={"data": data})
+        if ret.status_code == 200:
+            res = ret.json()
+            if res["status"]:
+                delete_m(Registration, objs=registrations)
+                return res["data"]["nbr_new"], res["data"]["nbr_doubles"]
+        return 0, 0
+    except Exception as e:
+        log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
+        return 0, 0
+
 
 

@@ -16,7 +16,7 @@ bp_user = Blueprint('user', __name__)
 @login_required
 @level_5_required
 def show():
-    return render_template("project/user.html", table_config=config.create_table_config())
+    return render_template("user.html", table_config=config.create_table_config())
 
 @bp_user.route('/user/dt', methods=['POST'])
 @login_required

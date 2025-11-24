@@ -1,7 +1,5 @@
 from app import app, data as dl, subscribe_email_log_handler_cb
-from app.data import settings as msettings
-import datetime, inspect, logging.handlers
-
+import datetime, inspect
 
 #logging on file level
 import logging

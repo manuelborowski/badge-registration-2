@@ -5,7 +5,7 @@ from app.data.registration import Registration
 from app.data.settings import get_configuration_setting
 from app import application as al, data as dl
 
-from app import log, app
+from app import log
 
 bp_overview = Blueprint('overview', __name__)
 

@@ -7,6 +7,7 @@ import {person_image} from "../../img/base64-person.js";
 import {ctx, datatable_clear_checked_boxes, datatable_remove_table, datatable_row_data_from_id, datatable_rows_add, datatable_rows_delete, datatable_update_cell, datatables_init} from "../datatables/dt.js";
 import {BForms} from "../common/BForms.js";
 import {ContextMenu} from "../common/context_menu.js";
+import {base_init} from "../base.js";
 
 // location specific data, parameters and processing is done per location
 class LocationBase {
@@ -14,15 +15,19 @@ class LocationBase {
         title: "Overview", view: "overview",
     }
 
-    table_template = [{name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"}, {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"}, {
-        name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"
-    }, {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"}, {name: "Klas", data: "klascode", orderable: true, width: "4%", visible: "yes"},]
+    table_template = [
+        {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
+        {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"},
+        {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
+        {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
+        {name: "Klas", data: "klascode", orderable: true, width: "4%", visible: "yes"},
+    ]
 
     context_menu_items = [
         {level: 3, type: "item", label: "Exporteer registraties", iconscout: 'export', cb: () => this.export_registrations()},
-        {level: 3, type: "divider"}, {
-            level: 3, type: "item", label: "Registratie verwijderen", iconscout: "trash-alt", cb: ids => this.delete_registration(ids)
-        },]
+        {level: 3, type: "divider"},
+        {level: 3, type: "item", label: "Registratie verwijderen", iconscout: "trash-alt", cb: ids => this.delete_registration(ids)},
+    ]
 
     canvas_element = document.getElementById("canvas");
     photo_size_factor = 50;
@@ -195,6 +200,7 @@ class LocationBase {
         }
         ctx.context_menu = new ContextMenu(document.querySelector("#canvas"), this.context_menu_items);
         ctx.context_menu.subscribe_get_ids(get_tile_id);
+        base_init({});
     }
 
     // Each time the page is refreshed, or the location is changed, load and process registrations
@@ -237,9 +243,10 @@ class LocationBase {
 }
 
 class LocationCellphone extends LocationBase {
-    extra_template = [{name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}}, {
-        name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"
-    },]
+    extra_template = [
+        {name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
+        {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
+    ]
 
     extra_context = [
         {level: 3, type: "divider"},
@@ -271,15 +278,18 @@ class LocationSMS extends LocationBase {}
 class LocationTimeRegistration extends LocationBase {
     table_template = [
         {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
-        {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"}, {
-        name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"
-    }, {name: "code", data: "code", orderable: true, width: "4%", visible: "yes"}, {name: "Tijd in", data: "time_in", orderable: true, width: "8%", visible: "yes"}, {
-        name: "Startuur", data: "start", orderable: true, width: "4%", visible: "yes"
-    }, {name: "Verschil", data: "time_in_diff", orderable: true, width: "4%", visible: "yes"}, {name: "Tijd uit", data: "time_out", orderable: true, width: "8%", visible: "yes"}, {
-        name: "Einduur", data: "stop", orderable: true, width: "4%", visible: "yes"
-    }, {name: "Verschil", data: "time_out_diff", orderable: true, width: "4%", visible: "yes"}, {name: "Dagverschil", data: "time_diff", orderable: true, width: "4%", visible: "yes"}, {
-        name: "Opmerking", data: "info", orderable: true, width: "50%", visible: "yes", celledit: {type: "text-confirmkey"}
-    },]
+        {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
+        {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
+        {name: "code", data: "code", orderable: true, width: "4%", visible: "yes"},
+        {name: "Tijd in", data: "time_in", orderable: true, width: "8%", visible: "yes"},
+        {name: "Startuur", data: "start", orderable: true, width: "4%", visible: "yes"},
+        {name: "Verschil", data: "time_in_diff", orderable: true, width: "4%", visible: "yes"},
+        {name: "Tijd uit", data: "time_out", orderable: true, width: "8%", visible: "yes"},
+        {name: "Einduur", data: "stop", orderable: true, width: "4%", visible: "yes"},
+        {name: "Verschil", data: "time_out_diff", orderable: true, width: "4%", visible: "yes"},
+        {name: "Dagverschil", data: "time_diff", orderable: true, width: "4%", visible: "yes"},
+        {name: "Opmerking", data: "info", orderable: true, width: "50%", visible: "yes", celledit: {type: "text-confirmkey"}},
+    ]
 
     process_data(data) {
         let start = "", stop = "", time_out_diff = "", time_diff = "", time_in_diff = "";
@@ -320,14 +330,11 @@ let filter_menu = null;
 const location_filter_options = Object.entries(meta.location).filter(i => i[1].access_level <= current_user.level || !i[1].access_level)
     .toSorted((a, b) => a[1].locatie.localeCompare(b[1].locatie))
     .map(([k, v]) => ({value: k, label: v.locatie}));
-const filter_menu_items = [{
-    type: 'select', id: 'location', label: 'Locaties', options: location_filter_options, default: location_filter_options[0].value, persistent: true,
-}, {
-    type: 'select', id: 'view_layout', label: 'Layout', options: [{value: "tile", label: "Tegel"}, {value: "list", label: "Lijst"}], default: "list", persistent: true
-}, {
-    type: 'select', id: 'period', label: 'Periode', options: [{value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week",
-    persistent: true
-},]
+const filter_menu_items = [
+    {type: 'select', id: 'location', label: 'Locaties', options: location_filter_options, default: location_filter_options[0].value, persistent: true,},
+    {type: 'select', id: 'view_layout', label: 'Layout', options: [{value: "tile", label: "Tegel"}, {value: "list", label: "Lijst"}], default: "list", persistent: true},
+    {type: 'select', id: 'period', label: 'Periode', options: [{value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week", persistent: true},
+]
 
 // The action menu is located after the filter menu and contains a pull down to enable or disable the RFID scanner
 // depending of the state of the scanner, the background color is update to indicate to the user
@@ -347,10 +354,9 @@ const action_scanner_changed = (id, value) => {
 }
 
 let action_menu = null;
-const action_menu_items = [{
-    type: 'select', id: 'scanner', label: 'Scanner', options: [{value: "off", label: "Geen"}, {value: "on", label: "Wel"}], default: "off", persistent: true, cb: action_scanner_changed
-
-},]
+const action_menu_items = [
+    {type: 'select', id: 'scanner', label: 'Scanner', options: [{value: "off", label: "Geen"}, {value: "on", label: "Wel"}], default: "off", persistent: true, cb: action_scanner_changed},
+]
 
 // Called each time a filter (location, layout...) has changed
 const filter_changed_cb = async (id, value) => {
