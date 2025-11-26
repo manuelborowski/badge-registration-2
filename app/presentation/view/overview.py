@@ -37,6 +37,9 @@ def overview():
             item = dl.models.get(Registration, ("id", "=", data["id"]))
             del data["id"]
             registration = dl.models.update(Registration, item, data)
+            ret = {"id": registration.id}
+            ret.update(data)
+            al.socketio.send_to_room({"type": "update-registration", "data": ret}, registration.location)
             return json.dumps({"data": registration.to_dict()})
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')

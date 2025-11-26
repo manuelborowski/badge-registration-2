@@ -346,14 +346,14 @@ def papercut_export(type):
 def registration_send_message(ids):
     try:
         location_settings = get_configuration_setting("location-profiles")
-        data = []
         for id in ids:
             registration = get(Registration, ("id", "=", id))
             location = location_settings[registration.location]
             student = get(Student, [("leerlingnummer", "=", registration.person_id)])
             if student:
                 if location["type"] == "sms":
-                    data.append({"id": id, "sms_sent": __send_sms(registration, location, student)})
+                    if __send_sms(registration, location, student):
+                        al.socketio.send_to_room({"type": "update-registration", "data": {"id": registration.id, "data": "flag1", "value": True}}, registration.location)
                 elif location["type"] == "cellphone":
                     if __send_ss_message(registration, location, student):
                         al.socketio.send_to_room({"type": "update-registration", "data": {"id": registration.id, "data": "flag1", "value": True} }, registration.location)
@@ -367,7 +367,7 @@ def registration_send_message(ids):
 def __send_sms(registration, location, student, force=False):
     try:
         receiver = ""
-        if not registration.flag2 or force:
+        if not registration.flag1 or force:
             text_body = get_configuration_setting("sms-student-too-late")
             text_body = text_body.replace("%%VOORNAAM%%", student.voornaam)
             text_body = text_body.replace("%%NAAM%%", student.naam)
@@ -383,12 +383,13 @@ def __send_sms(registration, location, student, force=False):
                 if student.lpv2_gsm != "":
                     send_sms(student.lpv2_gsm, text_body, enable_send_sms)
                     receiver += student.lpv2_gsm
-            # flag2: sms is sent
-            update(Registration, registration, {"flag2": True})
+            # flag1: sms is sent
+            update(Registration, registration, {"flag1": True})
             log.info(f'{inspect.currentframe().f_code.co_name}: SMS ({location["locatie"]}), {student.naam} {student.voornaam} at {registration.time_in}, to {receiver}')
         else:
-            log.info(f'{inspect.currentframe().f_code.co_name}: SMS ({location["locatie"]}), {student.naam} {student.voornaam} NOT sent')
-        return registration.flag2
+            log.info(f'{inspect.currentframe().f_code.co_name}: SMS ({location["locatie"]}), {student.naam} {student.voornaam} already send')
+            return False
+        return True
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return False

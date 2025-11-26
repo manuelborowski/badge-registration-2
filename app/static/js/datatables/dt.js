@@ -55,7 +55,12 @@ export const datatable_row_data_from_target = target => {
 export function datatable_update_cell(row_id, column_name, value) {
     let row_idx = ctx.table.row(`#${row_id}`).index();
     let column_idx = datatable_column2index[column_name];
-    ctx.table.cell(row_idx, column_idx).data(value).draw();
+    if (column_idx !== undefined) {
+        ctx.table.cell(row_idx, column_idx).data(value).draw();
+    } else {
+        ctx.table.rows(row_idx).data()[0][column_name] = value;
+        ctx.table.rows(row_idx).invalidate("data").draw(false);
+    }
 }
 
 export function datatable_filter(column_name, value) {
@@ -209,8 +214,6 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
             // update, if required, data before checking on row_color and cell_color
             if (callbacks.created_row) callbacks.created_row(row, data, dataIndex, cells);
             // in format_data, it is possible to tag a line with a different backgroundcolor
-            if (data.row_action !== null) row.cells[0].innerHTML = `<input type='checkbox' class='chbx_all' name='chbx' value='${data.row_action}' ${data.disable_selectbox ? "disabled": ""}>`
-            // if (data.disable_selectbox) row.firstChild.firstChild.disabled = true;
             if (data.row_color) $(row).attr("style", `background-color:${data.row_color};`);
             if (data.cell_color) {
                 for (const [cn, cc] of Object.entries(data.cell_color)) {
@@ -221,6 +224,7 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         },
         // This callback is executed each time the table is reloaded or a value is changed.
         rowCallback: function (row, data, displayNum, displayIndex, dataIndex) {
+            if (data.row_action !== null) row.cells[0].innerHTML = `<input type='checkbox' class='chbx_all' name='chbx' value='${data.row_action}' ${data.disable_selectbox ? "disabled": ""}>`
             // celledit of type select: overwrite cell content with label from optionlist
             if (cell_edit.select_options) {
                 for (const [column, select] of Object.entries(cell_edit.select_options)) {

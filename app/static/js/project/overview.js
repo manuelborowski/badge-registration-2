@@ -1,5 +1,5 @@
 import {FilterMenu} from "../common/filter_menu.js";
-import {fetch_delete, fetch_get, fetch_post} from "../common/common.js";
+import {fetch_delete, fetch_get, fetch_post, fetch_update} from "../common/common.js";
 import {rfid_serial} from "../common/rfidserial.js";
 import {ActionMenu} from "../common/action_menu.js";
 import {socketio} from "../common/socketio.js";
@@ -101,7 +101,7 @@ class LocationBase {
         });
     }
 
-    send_smartschool_message = async (ids) => {
+    send_message = async (ids) => {
         let message = "";
         if (filters.view_layout === "tile") {
             message = `Wilt u een bericht naar ${document.querySelector(`figure[data-id="${ids[0]}"]`).dataset.name} sturen?`
@@ -222,7 +222,7 @@ class LocationBase {
 
     }
 
-// Called by server, via socketio, when a registration is added
+    // Called by server, via socketio, when a registration is added
     async add_single_registration(type, data) {
         if (filters.view_layout === "tile") {
             this.render_tile(data, true);
@@ -233,11 +233,23 @@ class LocationBase {
         }
     }
 
-// Called by server, via socketio, when a registration is updated
+    // Called by server, via socketio, when a registration is updated
     async update_single_registration(type, data) {
         if (filters.view_layout === "tile") {
         } else {
-            datatable_update_cell(data.id, data.data, data.value);
+            const id = data.id;
+            delete data.id;
+            const items = Object.entries(data);
+            for (const item of items) datatable_update_cell(id, item[0], item[1]);
+        }
+    }
+
+    // Called by server, via socketio, when a registration is updated
+    async update_registrations(type, data) {
+        if (filters.view_layout === "tile") {
+        } else {
+            if (!Array.isArray(data)) data = [data];
+            for (const item of data) datatable_update_cell(item.id, item.data, item.value);
         }
     }
 }
@@ -254,7 +266,7 @@ class LocationCellphone extends LocationBase {
         {level: 3, type: "divider"},
         {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
         {level: 3, type: "divider"},
-        {level: 3, type: "item", label: "Stuur Smartschool bericht", iconscout: "envelope-send", cb: (ids) => this.send_smartschool_message(ids)},
+        {level: 3, type: "item", label: "Stuur Smartschool bericht", iconscout: "envelope-send", cb: (ids) => this.send_message(ids)},
     ])
 }
 
@@ -274,7 +286,26 @@ class LocationVerkoop extends LocationBase {
     table_config = Object.assign(table_config, {width: "40%"});
 }
 
-class LocationSMS extends LocationBase {}
+class LocationSMS extends LocationBase {
+    table_config = Object.assign(this.table_config, {width: "70%"});
+
+    table_template = this.table_template.concat([
+        {name: "SMS", data: "flag1", orderable: false, width: "2%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
+        {name: "Reden te laat", data: "text1", orderable: false, width: "40%", visible: "yes", celledit: {type: "text-confirmkey"}, display: {fields: [{field: "text1"}, {field: "flag2", colors: {true: "#CEEBCC"}}]}},
+    ])
+
+    context_menu_items = [
+        {level: 3, type: "item", label: "Bevestig reden", iconscout: "check", cb: (ids) => this.set_reason_confirmation(ids, true)},
+        {level: 3, type: "item", label: "Verwijder bevestiging", iconscout: "minus", cb: (ids) => this.set_reason_confirmation(ids, false)},
+        {level: 3, type: "divider"},
+        {level: 3, type: "item", label: "Stuur SMS bericht", iconscout: "envelope-send", cb: (ids) => this.send_message(ids)},
+        {level: 3, type: "divider"},
+    ].concat(this.context_menu_items);
+
+    async set_reason_confirmation(ids, confirm = true) {
+        for (const id of ids) await fetch_update("registration.registration", {id, flag2: confirm});
+    }
+}
 
 class LocationTimeRegistration extends LocationBase {
     table_template = [
@@ -383,5 +414,6 @@ $(document).ready(async function () {
     default_actions();
     socketio.subscribe_on_receive("add-registration", (type, data) => location_processor.add_single_registration(type, data));
     socketio.subscribe_on_receive("update-registration", (type, data) => location_processor.update_single_registration(type, data));
+    socketio.subscribe_on_receive("update-registrations", (type, data) => location_processor.update_registrations(type, data));
 });
 

@@ -95,6 +95,7 @@ default_configuration_settings = {
     'user-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
     'student-datatables-template': ({}, Settings.SETTING_TYPE.E_YAML),
     'smartschool-message-templates': ("", Settings.SETTING_TYPE.E_STRING),
+    'sms-student-too-late': ("", Settings.SETTING_TYPE.E_STRING),
 
     'cron-scheduler-template': ('', Settings.SETTING_TYPE.E_STRING),
     'cron-enable-modules': ({}, Settings.SETTING_TYPE.E_JSON),

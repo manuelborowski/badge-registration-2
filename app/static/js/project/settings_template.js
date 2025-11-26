@@ -3,12 +3,16 @@ export const settings_template = [
             type: "container", label: "Templates", save: true, default_collapsed: true, rows: [
                 {label: "Gebruikers", name: "user-datatables-template", type: "textarea"},
                 {label: "Studenten", name: "student-datatables-template", type: "textarea"},
-                {label: "Smartschool berichten (HTML)", name: "smartschool-message-templates", type: "textarea"},
+                {label: "Smartschool bericht (HTML)", name: "smartschool-message-templates", type: "textarea"},
                 {type: "div", innerHTML: "Smartschool bericht variabelen:<br>%%NAAM%%\n" +
                         "<br>%%VOORNAAM%%\n" +
                         "<br>%%TIJD%%\n" +
                         "<br>%%KLAS%%\n" +
                         "<br>%%AANTAL-OVERTREDINGEN%%"},
+                {label: "SMS bericht (text)", name: "sms-student-too-late", type: "textarea"},
+                {type: "div", innerHTML: "SMS bericht variabelen:<br>%%NAAM%%\n" +
+                        "<br>%%VOORNAAM%%\n" +
+                        "<br>%%TIJD%%\n"},
             ]
         },
         {

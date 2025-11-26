@@ -4,6 +4,7 @@ from flask import request, Blueprint, render_template, render_template_string
 from flask_login import login_required
 from app import application as al, data as dl
 from app.presentation.view import level_3_required
+from app.data.registration import Registration
 
 #logging on file level
 import logging
@@ -22,7 +23,7 @@ def show():
         return render_template("m/project/register.html")
     return render_template_string("<h1>Fout, verkeerde url</h1>")
 
-@bp_registration.route('/registration', methods=["POST", "DELETE"])
+@bp_registration.route('/registration', methods=["POST", "DELETE", "UPDATE"])
 @level_3_required
 @login_required
 def registration():
@@ -33,6 +34,16 @@ def registration():
     if request.method == "DELETE":
         ret = al.registration.registration_delete(request.args["id"])
         return json.dumps(ret)
+    if request.method == "UPDATE":
+        data = json.loads(request.data)
+        item = dl.models.get(Registration, ("id", "=", data["id"]))
+        del data["id"]
+        registration = dl.models.update(Registration, item, data)
+        ret = {"id": registration.id}
+        ret.update(data)
+        al.socketio.send_to_room({"type": "update-registration", "data": ret}, registration.location)
+        return json.dumps({"data": registration.to_dict()})
+
     log.error(f'{inspect.currentframe().f_code.co_name}:  incorrect request method {request.method}')
     return json.dumps({"status": "error", "msg": f"Verkeerde request methode: {request.method}"})
 
