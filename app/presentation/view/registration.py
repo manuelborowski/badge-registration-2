@@ -1,16 +1,26 @@
+from user_agents import parse
 import json, inspect
-from flask import request, Blueprint
+from flask import request, Blueprint, render_template, render_template_string
 from flask_login import login_required
 from app import application as al, data as dl
-from app.data.registration import Registration
 from app.presentation.view import level_3_required
 
 #logging on file level
 import logging
-from app import MyLogFilter, top_log_handle, app
+from app import MyLogFilter, top_log_handle
 log = logging.getLogger(f"{top_log_handle}.{__name__}")
 log.addFilter(MyLogFilter())
 bp_registration = Blueprint('registration', __name__)
+
+@bp_registration.route('/registrationshow', methods=['GET'])
+@login_required
+@level_3_required
+def show():
+    user_agent_str = request.headers.get('User-Agent')
+    user_agent = parse(user_agent_str)
+    if user_agent.is_mobile:
+        return render_template("m/project/register.html")
+    return render_template_string("<h1>Fout, verkeerde url</h1>")
 
 @bp_registration.route('/registration', methods=["POST", "DELETE"])
 @level_3_required
@@ -61,5 +71,14 @@ def export():
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return {"status": False, "data": f'{inspect.currentframe().f_code.co_name}: {e}'}
+
+@bp_registration.route('/registration/meta', methods=['GET'])
+@login_required
+def meta():
+    location_profiles = dl.settings.get_configuration_setting("location-profiles")
+    locations = [{"value": k, "label": v["locatie"]} for k, v in location_profiles.items()]
+    ret = {"locations": locations}
+    return json.dumps(ret)
+
 
 

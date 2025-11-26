@@ -39,10 +39,7 @@ def registration_add(params):
             student = get(Student, [("rfid", "=", rfid)])
             if student:
                 log.info(f'{inspect.currentframe().f_code.co_name}: test, {student.leerlingnummer} at {now}')
-                return [{
-                    "to": "location", 'type': 'update-list-of-registrations',
-                    "data": {"status": True, "date": str(today), "action": "add",
-                             "data": [{"leerlingnummer": student.leerlingnummer, "naam": student.naam, "voornaam": student.voornaam, "klascode": student.klascode, "timestamp": str(now)}]}}]
+                return {"status": "ok", "msg": f"test, {student.naam} {student.voornaam} at {now}"}
             else:
                 return {"status": "warning", "msg": f"Badge met code {rfid} niet in database"}
 
@@ -155,7 +152,7 @@ def registration_add(params):
             if registration:
                 log.info(f'{inspect.currentframe().f_code.co_name}: {registration}')
                 al.socketio.send_to_room({"type": "add-registration", "data": student.to_dict() | registration.to_dict() | {"photo": photo}},  location_key)
-                return {"status": "ok", "msg": f"student {student.naam} {student.voornaam} heeft gescand om {registration.time_in}"}
+                return {"status": "ok", "msg": f"student {student.naam} {student.voornaam} heeft gescand om {registration.time_in}", "data": student.to_dict() | registration.to_dict()}
 
             log.info(f'{inspect.currentframe().f_code.co_name}:  {student.leerlingnummer} could not make a registration')
             return {"status": "warning", "msg": "Kan geen nieuwe registratie maken"}

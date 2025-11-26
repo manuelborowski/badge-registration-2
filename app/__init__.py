@@ -21,8 +21,9 @@ from typing import Callable
 # 0.8: small aesthetic updates.
 # 0.9: small updates
 # 0.10: student new rfid -> push to SDH
+# 0.11: added mobile registration support
 
-version = "0.10"
+version = "0.11"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

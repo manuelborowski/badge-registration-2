@@ -1,4 +1,4 @@
-import {fetch_get} from "../../common/common.js";
+import {fetch_get} from "../common/common.js";
 
 $(document).ready(async () => {
     const users = await fetch_get("user.user");

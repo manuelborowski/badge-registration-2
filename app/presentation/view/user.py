@@ -1,3 +1,4 @@
+from user_agents import parse
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 from app.data.datatables import DatatableConfig
@@ -16,6 +17,10 @@ bp_user = Blueprint('user', __name__)
 @login_required
 @level_5_required
 def show():
+    user_agent_str = request.headers.get('User-Agent')
+    user_agent = parse(user_agent_str)
+    if user_agent.is_mobile:
+        return render_template("m/user.html")
     return render_template("user.html", table_config=config.create_table_config())
 
 @bp_user.route('/user/dt', methods=['POST'])
@@ -72,10 +77,3 @@ class Config(DatatableConfig):
     # Create custom datatable-cell render functions.
 
 config = Config("user", "Gebruikers")
-
-@bp_user.route('/usershowm', methods=['GET', 'POST'])
-@login_required
-@level_5_required
-def showm():
-    return render_template("project/m/user.html")
-
