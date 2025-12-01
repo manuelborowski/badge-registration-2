@@ -136,11 +136,12 @@ def login_ss():
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {str(e)}')
 
-@bp_auth.route(f'/{app.config["AUTO_LOGIN_URL"] if "AUTO_LOGIN_URL" in app.config else "NA1"}', methods=['POST', 'GET'])
+# kiosk mode, autologin
+@bp_auth.route(f'/autologin', methods=['POST', 'GET'])
 def auto_login_generic():
-    # remote server, generic auto login
-    if "AUTO_LOGIN_URL" in app.config:
-        if "AUTO_USER" in app.config:
+    key = request.args.get("key")
+    if "AUTO_LOGIN_KEY" in app.config and "AUTO_USER" in app.config:
+        if app.config["AUTO_LOGIN_KEY"] == key:
             user = dl.models.get(dl.user.User,('username', "c=", app.config["AUTO_USER"])) # c= : case sensitive comparison
             login_user(user)
             log.info(u'user {} logged in'.format(user.username))
@@ -148,5 +149,5 @@ def auto_login_generic():
             if not user:
                 log.error('Could not save timestamp')
             return redirect(url_for(app.config["MENU_DEFAULT"]))
-    return render_template('login.html', message=None)
+    return render_template('login.html', message={"status": "error", "data": "Fout bij autologin"}, qr_img=None, qr_caption="")
 

@@ -36,10 +36,11 @@
             {% endif %}
         </div>
         <h2 style="white-space: nowrap;margin-bottom: 0">{{ current_user.username }}&nbsp;&nbsp;</h2>
-        <a href="{{ url_for('auth.logout') }}">
-            <button class="btn btn-success navbar-btn">Logout</button>
-        </a>&nbsp;&nbsp;
-
+        {% if not kiosk_mode %}
+            <a href="{{ url_for('auth.logout') }}">
+                <button class="btn btn-success navbar-btn">Logout</button>
+            </a>&nbsp;&nbsp;
+        {% endif %}
     </div>
     <div>
         <div class="action-menu-placeholder"></div>

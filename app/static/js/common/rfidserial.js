@@ -26,7 +26,8 @@ class RfidSerial {
         } else {
             // Request new port, filtered by vendor/product IDs
             bootbox.confirm(
-                "Open een USB poort voor de badgereader",
+                "Open een USB poort voor de badgereader<br>Klik op <b>OK</b> en een volgend scherm verschijnt.<br>" +
+                "Selecteer <b>USB2.0-Serial (ttyUSB0)</b> en klik op <b>Connect</b>",
                 async result => {
                     if (result) {
                         await navigator.serial.requestPort({filters: [{usbVendorId: 0x1A86, usbProductId: 0x7523}],});

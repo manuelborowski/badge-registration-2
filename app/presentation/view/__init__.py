@@ -16,8 +16,9 @@ log.addFilter(MyLogFilter())
 @app.context_processor
 def inject_defaults():
     logout_idle_time = app.config["LOGOUT_IDLE_TIME"] if "LOGOUT_IDLE_TIME" in app.config else 0
+    kiosk_mode = current_user.is_authenticated and app.config["AUTO_USER"] == current_user.username
     return dict(version=f'@ 2025 MB. {version}', title=app.config['TITLE'], current_user=current_user, enable_server_heartbeat=app.config["RUN_MODE"] == "production",
-                logout_idle_time=logout_idle_time, logo=app.config["LOGO"])
+                logout_idle_time=logout_idle_time, logo=app.config["LOGO"], kiosk_mode=kiosk_mode)
 
 def send_alert_to_client(status, msg):
     al.socketio.send_to_client({"type": "alert-popup", "data": {"data": msg, "status": status}})
