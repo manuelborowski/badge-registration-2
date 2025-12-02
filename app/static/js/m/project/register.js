@@ -1,4 +1,5 @@
 import {fetch_get, fetch_post} from "../../common/common.js";
+import {base_init} from "../base.js";
 
 $(document).ready(async () => {
     const register_type_select = document.getElementById("register-type-select");
@@ -66,4 +67,5 @@ $(document).ready(async () => {
             }
         });
     });
+    base_init();
 });

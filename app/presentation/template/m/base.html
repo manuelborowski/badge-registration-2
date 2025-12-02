@@ -9,14 +9,22 @@
               integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.23.0/dist/sweetalert2.min.css"
               integrity="sha256-RHjk4NC06Gzv9DRXsogGrVjIZOc71LxqhydWMwMDhEU=" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <link href="static/css/m/base.css" rel="stylesheet">
     {% endblock %}
 </head>
 <body>
 <nav>
-    <div style="display:flex;justify-content: space-around">
-        <h2>Gebruikers</h2>
+    <div style="display:flex;justify-content: flex-start;align-items: normal;">
+        <div style="width:100%;text-align:start">
+            {% if current_user.is_authenticated %}
+                <ul id="navbar"></ul>
+            {% endif %}
+        </div>
+        <i id="hamburger" class="fa fa-bars"></i>
     </div>
+    {% block nav %}
+    {% endblock %}
 </nav>
 <main id="main">
     {% block body %}
@@ -37,6 +45,12 @@
             src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.2/bootbox.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.23.0/dist/sweetalert2.all.min.js"
             integrity="sha256-+kMpHtNaVp0Vv0B9iX7tymEm7qv+6ASnck0/uuMeYNA=" crossorigin="anonymous"></script>
+    <script>
+        const current_user = {
+            level: {{(current_user.level or null)|tojson}}, username: {{(current_user.username or null)|tojson }}
+        };
+        const suppress_navbar = {{ (suppress_navbar or False)|tojson}};
+    </script>
     <script type="module">
         import {socketio} from "../../static/js/common/socketio.js";
 

@@ -33,6 +33,42 @@ body > nav > div {
     align-items: center;
 }
 
+nav > div:first-child > div:first-child {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+nav > div:first-child > div:first-child > * {
+    padding-inline-start: 0;
+}
+
+nav > div:first-child > div:first-child > ul {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    list-style: none;
+}
+
+nav > div:first-child > div:first-child > ul a {
+    text-decoration: none;
+    background-color: transparent;
+    padding: 0;
+}
+
+.selected {
+    color: white;
+}
+
+.not-selected-not-visible {
+    display: none;
+}
+
+.not-selected-visible {
+    display: inline;
+    color: #aaaaaa;
+}
+
 main {
     flex: 1;
     overflow-y: auto; /* Enable scrolling if content overflows */
@@ -144,3 +180,4 @@ label:has(input[type="checkbox"]) {
 .login-image {
     height: 300px;
 }
+

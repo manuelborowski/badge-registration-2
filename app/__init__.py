@@ -24,8 +24,9 @@ from typing import Callable
 # 0.11: added mobile registration support
 # 0.12: added support for sms/student-too-late
 # 0.13: updated kiosk mode
+# 0.14: mobile, updated navigation lint
 
-version = "0.13"
+version = "0.14"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

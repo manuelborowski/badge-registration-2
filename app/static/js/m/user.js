@@ -1,4 +1,5 @@
 import {fetch_get} from "../common/common.js";
+import {base_init} from "./base.js";
 
 $(document).ready(async () => {
     const users = await fetch_get("user.user");
@@ -6,4 +7,5 @@ $(document).ready(async () => {
     for (const user of users) {
         user_list.innerHTML += `${user.username} ${user.last_name} ${user.first_name} <br>`
     }
+    base_init();
 });
