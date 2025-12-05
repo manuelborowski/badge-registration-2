@@ -171,6 +171,9 @@ export class BForms {
                                     label.classList.add("vertical-center-label");
                                     tag.classList.add("vertical-center-element");
                                 }
+                                else if (format === "label-top") {
+                                    label.classList.add("top");
+                                }
                             }
                             if ("typecast" in element) this.typecasts.push({name: element.name, typecast: element.typecast});
                         }

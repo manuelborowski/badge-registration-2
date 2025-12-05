@@ -17,10 +17,8 @@ def show():
 @bp_overview.route('/overview/meta', methods=['GET'])
 @login_required
 def meta():
-    location = get_configuration_setting("location-profiles")
-    return json.dumps({
-        "location": location,
-    })
+    locations = get_configuration_setting("location-profiles")
+    return json.dumps({"locations": locations,})
 
 @bp_overview.route('/overview', methods=['GET', "UPDATE"])
 @login_required

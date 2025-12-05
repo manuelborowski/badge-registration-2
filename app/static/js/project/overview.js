@@ -351,15 +351,15 @@ const location_processors = {
 
 let location_processor = null;
 const set_location_processor = () => {
-    location_processor = location_processors[meta.location[filters.location].type];
-    location_processor.location = meta.location[filters.location];
+    location_processor = location_processors[meta.locations[filters.location].type];
+    location_processor.location = meta.locations[filters.location];
 }
 
 const meta = await fetch_get("overview.meta");
 
 // construct the filter menu in the navigation bar
 let filter_menu = null;
-const location_filter_options = Object.entries(meta.location).filter(i => i[1].access_level <= current_user.level || !i[1].access_level)
+const location_filter_options = Object.entries(meta.locations).filter(i => i[1].access_level <= current_user.level || !i[1].access_level)
     .toSorted((a, b) => a[1].locatie.localeCompare(b[1].locatie))
     .map(([k, v]) => ({value: k, label: v.locatie}));
 const filter_menu_items = [

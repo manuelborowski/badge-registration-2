@@ -7,7 +7,7 @@ const location_key = "timeregistration";
 
 const __new_registration = (ids) => {
     const staff = datatable_row_data_from_id(ids[0]);
-    bootbox.confirm(`Registratie: ${meta.location[location_key].locatie}<br>Voor: ${staff.naam} ${staff.voornaam}`, async result => {
+    bootbox.confirm(`Registratie: ${meta.locations[location_key].locatie}<br>Voor: ${staff.naam} ${staff.voornaam}`, async result => {
         if (result) {
             const ret = await fetch_post("registration.registration", {location_key, rfid: staff.rfid});
         }
@@ -26,7 +26,7 @@ const __new_rfid = (ids) => {
 }
 
 const context_menu_items = [
-    {type: "item", label: `Nieuwe registratie: ${meta.location[location_key].locatie}`, iconscout: 'plus-circle', cb: ids => __new_registration(ids)},
+    {type: "item", label: `Nieuwe registratie: ${meta.locations[location_key].locatie}`, iconscout: 'plus-circle', cb: ids => __new_registration(ids)},
     {type: "divider"},
     {type: "item", iconscout: "wifi", label: "RFID code aanpassen", cb: ids => __new_rfid(ids)},
 ]

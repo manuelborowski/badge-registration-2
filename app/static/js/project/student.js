@@ -9,7 +9,7 @@ const location_key = localStorage.getItem("overview-location-select");
 
 const __new_registration = (ids) => {
     const student = datatable_row_data_from_id(ids[0]);
-    bootbox.confirm(`Registratie: ${meta.location[location_key].locatie}<br>Voor: ${student.naam} ${student.voornaam}`, async result => {
+    bootbox.confirm(`Registratie: ${meta.locations[location_key].locatie}<br>Voor: ${student.naam} ${student.voornaam}`, async result => {
         if (result) {
             await fetch_post("registration.registration", {location_key, leerlingnummer: student.leerlingnummer});
         }
@@ -48,7 +48,7 @@ const __export_balances_cb = async () => {
                 className: "btn-primary",
                 callback: async () => {
                     const form_data = bform.get_data();
-                    for (const [key, location] of Object.entries(meta.location)) {
+                    for (const [key, location] of Object.entries(meta.locations)) {
                         if (location.type === "verkoop") {
                             window.open(`/student/balance/${key}/${form_data.from}/${form_data.till}`, '_blank');
                         }
@@ -86,7 +86,7 @@ const __import_papercut_data_cb = async () => {
 }
 
 const context_menu_items = [
-    {type: "item", label: `Nieuwe registratie: ${meta.location[location_key].locatie}`, iconscout: 'plus-circle', cb: ids => __new_registration(ids)},
+    {type: "item", label: `Nieuwe registratie: ${meta.locations[location_key].locatie}`, iconscout: 'plus-circle', cb: ids => __new_registration(ids)},
     {type: "divider"},
     {type: "item", iconscout: "wifi", label: "RFID code aanpassen", cb: ids => __new_rfid(ids)},
     {type: "divider"},
