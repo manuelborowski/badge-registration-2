@@ -45,7 +45,7 @@ const __reload_page = () => {
 const __scanner_init = () => {
     rfid_serial.connect(async data => {
         if (data.type === "state") {
-            if (data.value === false) new AlertPopup("warning", "Opgelet, verbind de badgescanner met de laptop aub!", 2000)
+            if (data.value === false) new AlertPopup("warning", "Opgelet, verbind de badgescanner met de laptop aub!<br>En druk op de toetsen ctrl + r", 2000);
         } else if (data.type === "rfid") {
             await fetch_post("registration.registration", {location_key: "timeregistration", rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
         }

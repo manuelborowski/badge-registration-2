@@ -28,8 +28,9 @@ from typing import Callable
 # 0.15: mobile, able to update registration.
 # 0.16: update login screen
 # 0.17: rfidserial: show warning when scanner is disconnected
+# 0.18: on linux, when disconnecting the scanner, chromium loses the serial port
 
-version = "0.17"
+version = "0.18"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
