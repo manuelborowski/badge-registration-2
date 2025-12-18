@@ -43,6 +43,8 @@ class RfidSerialWorker {
                 this.__connect_interval = null;
             }
             postMessage({type: "state", value: true})
+        } else {
+            postMessage({type: "state", value: false})
         }
     }
 
