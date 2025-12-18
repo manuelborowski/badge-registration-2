@@ -38,7 +38,6 @@ class LocationBase {
         this.registration_cache[line.id] = line;
         return `<div data-id=${line.id}>${line.time_in.substring(11, 19)}, ${line.klascode}, ${line.naam} ${line.voornaam} ${extra}</div>`
     }
-
 }
 
 class LocationCellphone extends LocationBase {

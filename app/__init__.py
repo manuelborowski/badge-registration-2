@@ -26,8 +26,9 @@ from typing import Callable
 # 0.13: updated kiosk mode
 # 0.14: mobile, updated navigation lint
 # 0.15: mobile, able to update registration.
+# 0.16: update login screen
 
-version = "0.15"
+version = "0.16"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
