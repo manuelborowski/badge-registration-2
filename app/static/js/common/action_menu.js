@@ -22,6 +22,10 @@ export class ActionMenu {
                     input.disabled = true;
                     input.id = item.id;
                     if ("width" in item) input.style.width = item.width;
+                } else if (item.type === "label") {
+                    element = document.createElement("label");
+                    element.innerHTML = item.label;
+                    element.id = item.id;
                 } else if (item.type === "select") {
                     element = document.createElement("div");
                     element.classList.add(".filter-form-group");
@@ -43,7 +47,9 @@ export class ActionMenu {
                 }
                 if (element) {
                     placeholder.appendChild(element);
-                    if ("align" in item) element.classList.add(`align-${item.align}`)
+                    if ("align" in item) element.classList.add(`align-${item.align}`);
+                    if ("class" in item) element.classList.add(...item.class);
+                    element.style.marginRight = "10px";
                 }
             }
         }

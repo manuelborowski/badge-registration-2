@@ -110,7 +110,5 @@ const __serialrfid_cb = async data => {
 
 $(document).ready(function () {
     const ctx = datatables_init({context_menu_items});
-    if (localStorage.getItem("action-overview-scanner") === "on") {
-        rfid_serial.connect(__serialrfid_cb);
-    }
+    rfid_serial.connect(__serialrfid_cb);
 });

@@ -371,26 +371,8 @@ const filter_menu_items = [
     },
 ]
 
-// The action menu is located after the filter menu and contains a pull down to enable or disable the RFID scanner
-// depending of the state of the scanner, the background color is update to indicate to the user
-const action_scanner_changed = (id, value) => {
-    if (value === "on") {
-        rfid_serial.connect(async data => {
-            if (data.type === "state") {
-                document.getElementById('scanner').style.backgroundColor = data.value ? "#a7e3a7" : "#deb872";
-            } else if (data.type === "rfid") {
-                const ret = await fetch_post("registration.registration", {location_key: filters.location, rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
-            }
-        });
-    } else {
-        rfid_serial.disconnect();
-        document.getElementById('scanner').style.backgroundColor = "white";
-    }
-}
-
-let action_menu = null;
 const action_menu_items = [
-    {type: 'select', id: 'scanner', label: 'Scanner', options: [{value: "off", label: "Geen"}, {value: "on", label: "Wel"}], default: "off", persistent: true, cb: action_scanner_changed},
+    {type: 'label', id: 'scanner', label: 'Scanner'},
 ]
 
 // Called each time a filter (location, layout...) has changed
@@ -400,17 +382,30 @@ const filter_changed_cb = async (id, value) => {
     location_processor.load_registrations();
 }
 
+const handle_scanner = () => {
+    // Visual indication of the RFID scanner state
+    document.getElementById('scanner').style.backgroundColor = "#deb872";
+    // Connect to scanner and install a callback for the state and rfid
+    rfid_serial.connect(async data => {
+        if (data.type === "state") {
+            document.getElementById('scanner').style.backgroundColor = data.value ? "#a7e3a7" : "#deb872";
+        } else if (data.type === "rfid") {
+            await fetch_post("registration.registration", {location_key: filters.location, rfid: data.rfid, timestamp: data.timestamp})
+        }
+    });
+}
+
 // Called once when the page is loaded
-const default_actions = () => {
-    action_scanner_changed('scanner', document.getElementById('scanner').value);
+const default_actions = async () => {
+    handle_scanner();
     set_location_processor();
-    location_processor.load_registrations();
+    await location_processor.load_registrations();
 }
 
 $(document).ready(async function () {
     filter_menu = new FilterMenu(document.querySelector(".filter-menu-placeholder"), filter_menu_items, filter_changed_cb, "overview");
     filters = Object.fromEntries(filter_menu.filters.map(f => [f.id, f.value])); // default filter values
-    action_menu = new ActionMenu(document.querySelector(".filter-menu-placeholder"), action_menu_items, "overview");
+    new ActionMenu(document.querySelector(".filter-menu-placeholder"), action_menu_items, "overview");
     default_actions();
     socketio.subscribe_on_receive("add-registration", (type, data) => location_processor.add_single_registration(type, data));
     socketio.subscribe_on_receive("update-registration", (type, data) => location_processor.update_single_registration(type, data));

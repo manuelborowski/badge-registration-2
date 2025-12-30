@@ -54,14 +54,12 @@ const table_config = {
         {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
         {name: "Code", data: "code", orderable: true, width: "4%", visible: "yes"},
         {name: "RFID", data: "rfid", orderable: true, width: "4%", visible: "yes"},
-        ]
+    ]
 }
 
 $(document).ready(async function () {
     const staffs = await fetch_get("staff.staff")
     const initial_data = staffs.map(i => Object.assign(i, {row_action: i.id, DT_RowId: i.id}));
     const ctx = datatables_init({config: table_config, context_menu_items, initial_data});
-    if (localStorage.getItem("action-overview-scanner") === "on") {
-        rfid_serial.connect(__serialrfid_cb);
-    }
+    rfid_serial.connect(__serialrfid_cb);
 });
