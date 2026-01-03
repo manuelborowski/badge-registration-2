@@ -16,7 +16,7 @@ bp_auth = Blueprint('auth', __name__, )
 def login():
     try:
         message = None
-        user_agent_str = request.headers.get('User-Agent')
+        user_agent_str = request.headers.get('User-Agent', "")
         user_agent = parse(user_agent_str)
         if app.config["MOBILE_LOGIN_ENABLE"]:
             url = f"{request.root_url}"
@@ -125,7 +125,7 @@ def login_ss():
                     log.error('Could not save user')
                     return redirect(url_for('auth.login'))
                 # Ok, continue
-                user_agent_str = request.headers.get('User-Agent')
+                user_agent_str = request.headers.get('User-Agent', "")
                 user_agent = parse(user_agent_str)
                 if user_agent.is_mobile:
                     return redirect(url_for(app.config["MENU_MOBILE_DEFAULT"]))

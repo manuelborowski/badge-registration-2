@@ -17,7 +17,7 @@ bp_registration = Blueprint('registration', __name__)
 @login_required
 @level_3_required
 def show():
-    user_agent_str = request.headers.get('User-Agent')
+    user_agent_str = request.headers.get('User-Agent', "")
     user_agent = parse(user_agent_str)
     if user_agent.is_mobile:
         return render_template("m/project/register.html")

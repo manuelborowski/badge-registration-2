@@ -30,8 +30,9 @@ from typing import Callable
 # 0.17: rfidserial: show warning when scanner is disconnected
 # 0.18: on linux, when disconnecting the scanner, chromium loses the serial port
 # 0.19: reverted to standalone rfid scanner, connected via websocket
+# 0.20: user_agents, set default to "" to avoid exceptions
 
-version = "0.19"
+version = "0.20"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
