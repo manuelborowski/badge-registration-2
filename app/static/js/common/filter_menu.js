@@ -3,7 +3,7 @@
 // source: [filter-x, filter-y]: counterpart of "trigger", check values of filter-x, ... to set the correct optionlist for this filter
 
 export class FilterMenu {
-    constructor(placeholder, menu, changed_cb, id) {
+    constructor(placeholder, menu, changed_cb, id, reset_button = true) {
         this.id = id;
         this.filter_cache = {};
         this.changed_cb = changed_cb;
@@ -75,17 +75,19 @@ export class FilterMenu {
                 }
                 placeholder.appendChild(form_group);
             }
-            const button = document.createElement("button");
-            placeholder.appendChild(button);
-            button.classList.add("btn", "btn-danger");
-            button.type = "button";
-            button.innerHTML = "Reset";
-            button.style.marginRight = "10px";
-            button.addEventListener("click", () => {
-                localStorage.removeItem(`Filter-${this.id}`);
-                let url = location.href.split("?")[0]; // remove trailing arguments
-                location.replace(url);
-            });
+            if (reset_button) {
+                const button = document.createElement("button");
+                placeholder.appendChild(button);
+                button.classList.add("btn", "btn-danger");
+                button.type = "button";
+                button.innerHTML = "Reset";
+                button.style.marginRight = "10px";
+                button.addEventListener("click", () => {
+                    localStorage.removeItem(`Filter-${this.id}`);
+                    let url = location.href.split("?")[0]; // remove trailing arguments
+                    location.replace(url);
+                });
+            }
             placeholder.style.display = "flex";
 
             // second stage, iterate over the filters and set the value of the filter.  This will trigger the "source" filters to add their options.

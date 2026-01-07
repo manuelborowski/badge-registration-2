@@ -403,7 +403,7 @@ const default_actions = async () => {
 }
 
 $(document).ready(async function () {
-    filter_menu = new FilterMenu(document.querySelector(".filter-menu-placeholder"), filter_menu_items, filter_changed_cb, "overview");
+    filter_menu = new FilterMenu(document.querySelector(".filter-menu-placeholder"), filter_menu_items, filter_changed_cb, "overview", false);
     filters = Object.fromEntries(filter_menu.filters.map(f => [f.id, f.value])); // default filter values
     new ActionMenu(document.querySelector(".filter-menu-placeholder"), action_menu_items, "overview");
     default_actions();

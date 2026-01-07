@@ -31,8 +31,9 @@ from typing import Callable
 # 0.18: on linux, when disconnecting the scanner, chromium loses the serial port
 # 0.19: reverted to standalone rfid scanner, connected via websocket
 # 0.20: user_agents, set default to "" to avoid exceptions
+# 0.21: bugfix filter (today) and remove reset button
 
-version = "0.20"
+version = "0.21"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
