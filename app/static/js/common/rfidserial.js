@@ -59,7 +59,7 @@ class SerialViaWebSocket {
             if (this.__cb) {
                 if ("read" in data) {
                     // this.beep.play();
-                    this.__cb({type: "rfid", rfid: data.read.code});
+                    this.__cb({type: "rfid", rfid: data.read.code, timestamp: data.read.timestamp.substring(0, 19), hostname: data.read.hostname});
                 } else if ("scanner_state" in data)
                     this.set_state({serial_oper: data.scanner_state.state});
                 else console.log(`ws.onmessage, unknown data ${data}`);

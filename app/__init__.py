@@ -32,8 +32,9 @@ from typing import Callable
 # 0.19: reverted to standalone rfid scanner, connected via websocket
 # 0.20: user_agents, set default to "" to avoid exceptions
 # 0.21: bugfix filter (today) and remove reset button
+# 0.22: added hostname (scanner) for logging
 
-version = "0.21"
+version = "0.22"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

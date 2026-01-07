@@ -390,7 +390,7 @@ const handle_scanner = () => {
         if (data.type === "state") {
             document.getElementById('scanner').style.backgroundColor = data.value ? "#a7e3a7" : "#deb872";
         } else if (data.type === "rfid") {
-            await fetch_post("registration.registration", {location_key: filters.location, rfid: data.rfid, timestamp: data.timestamp})
+            await fetch_post("registration.registration", {location_key: filters.location, rfid: data.rfid, timestamp: data.timestamp, hostname: data.hostname})
         }
     });
 }

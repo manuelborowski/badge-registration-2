@@ -28,6 +28,7 @@ def registration_add(params):
         timestamp = params["timestamp"] if "timestamp" in params else None
         leerlingnummer = params["leerlingnummer"] if "leerlingnummer" in params else None
         rfid = params["rfid"] if "rfid" in params else None
+        hostname = params["hostname"] if "hostname" in params else "NA"
         if timestamp:
             now = datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
         else:
@@ -55,7 +56,7 @@ def registration_add(params):
         if "table" in location and location["table"] == "staff":
             staff = get(Staff, ("rfid", "=", rfid))
             if staff:
-                log.info(f'{inspect.currentframe().f_code.co_name}:  Add registration for {staff.code}, {staff.naam} {staff.voornaam} {location_key}')
+                log.info(f'{inspect.currentframe().f_code.co_name}:  staff scanner:{hostname}, {staff.code}, {staff.naam} {staff.voornaam} {location_key}')
                 if location["type"] == "timeregistration":
                     registrations = get_m(Registration, [("person_id", "=", staff.code), ("location", "=", location_key), ("time_in", ">", today)], order_by="id")
                     last_registration = registrations[-1] if len(registrations) > 0 else None
@@ -150,7 +151,7 @@ def registration_add(params):
             else:
                 return {"status": "warning", "msg": f"Locatie ({location_key}) niet gekend"}
             if registration:
-                log.info(f'{inspect.currentframe().f_code.co_name}: {registration}')
+                log.info(f'{inspect.currentframe().f_code.co_name}: scanner:{hostname}, {registration}')
                 al.socketio.send_to_room({"type": "add-registration", "data": student.to_dict() | registration.to_dict() | {"photo": photo}},  location_key)
                 return {"status": "ok", "msg": f"student {student.naam} {student.voornaam} heeft gescand om {registration.time_in}", "data": student.to_dict() | registration.to_dict()}
 
