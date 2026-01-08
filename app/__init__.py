@@ -33,8 +33,9 @@ from typing import Callable
 # 0.20: user_agents, set default to "" to avoid exceptions
 # 0.21: bugfix filter (today) and remove reset button
 # 0.22: added hostname (scanner) for logging
+# 0.23: update export registrations
 
-version = "0.22"
+version = "0.23"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

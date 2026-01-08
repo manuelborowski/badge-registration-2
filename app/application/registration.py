@@ -550,10 +550,9 @@ def registration_export(location_key, start_date, stop_date):
         else:
             registrations = dl.registration.registration_student_photo_get(location_key, time_low=start_date, time_high=stop_date)
             for (registration, student) in registrations:
-                item = {"naam": student.naam, "voornaam": student.voornaam, "klas": student.klascode, "leerlingnummer": student.leerlingnummer, "tijd": str(registration.time_in)}
+                item = {"naam": student.naam, "voornaam": student.voornaam, "klas": student.klascode, "leerlingnummer": student.leerlingnummer, "tijd": str(registration.time_in), "aantal": registration.aantal_items}
                 if location["type"] == "cellphone":
                     item.update({"bericht-gestuurd": "JA" if registration.flag1 else "NEE"})
-                    item.update({"aantal": registration.aantal_items})
                 elif location["type"] == "sms":
                     item.update({"bevestigd": "JA" if registration.flag1 else "NEE"})
                     item.update({"sms-gestuurd": "JA" if registration.flag2 else "NEE"})
