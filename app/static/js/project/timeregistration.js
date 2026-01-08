@@ -47,7 +47,7 @@ const __scanner_init = () => {
         if (data.type === "state") {
             if (data.value === false) new AlertPopup("warning", "Opgelet, verbind de badgescanner met de laptop aub!", 2000);
         } else if (data.type === "rfid") {
-            await fetch_post("registration.registration", {location_key: "timeregistration", rfid: data.rfid, timestamp: (new Date()).toJSON().substring(0, 19)})
+            await fetch_post("registration.registration", {location_key: "timeregistration", rfid: data.rfid, timestamp: data.timestamp, hostname: data.hostname})
         }
     });
 
