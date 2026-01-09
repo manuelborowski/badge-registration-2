@@ -62,7 +62,7 @@ def registration_add(params):
                     last_registration = registrations[-1] if len(registrations) > 0 else None
                     if last_registration and backoff:
                         if (now - (last_registration.time_in if last_registration.time_out == None else last_registration.time_out)).seconds < backoff:
-                            return {"status": "warning", "msg": f"Sorry, u moet langer wachten om terug te scannen"}
+                            return {"status": "warning", "delay": 10000, "msg": f"{staff.naam} {staff.voornaam} heeft zojuist gescand om {last_registration.time_in}.<br>U moet langer wachten om terug te scannen"}
                     if last_registration and last_registration.time_out is None:
                         text1 = ""
                         weekday = now.weekday()
@@ -95,7 +95,7 @@ def registration_add(params):
                         if registration:
                             log.info(f'{inspect.currentframe().f_code.co_name}: Badge in, {staff.code} at {now}')
                             al.socketio.send_to_room({"type": "add-registration", "data": staff.to_dict() | registration.to_dict()}, location_key)
-                            return {"status": "ok", "msg": f"{staff.naam} {staff.voornaam} heeft IN gescand om {registration.time_in}", "data": staff.to_dict() | registration.to_dict()}
+                            return {"status": "ok", "delay": 10000, "msg": f"{staff.naam} {staff.voornaam} heeft IN gescand om {registration.time_in}", "data": staff.to_dict() | registration.to_dict()}
             log.info(f'{inspect.currentframe().f_code.co_name}: rfid {rfid} not found in table: staff')
             return {"status": "warning", "msg": f"Kan personeelslid met rfid {rfid} niet vinden in database"}
 
@@ -212,6 +212,9 @@ def registration_get(location_key=None, view_layout=None, period=None):
             time_low = datetime.datetime.now() - datetime.timedelta(days=delta)
         if period in ["today"]:
             time_low = datetime.datetime.now().replace(hour=0)
+        if period in ["yesterday"]:
+            time_high = datetime.datetime.now().replace(hour=0)
+            time_low = time_high - datetime.timedelta(days=1)
         if "table" in location and location["table"] == "staff":
             # Staff specific data
             registrations = dl.registration.registration_staff_get(location_key, time_low=time_low, time_high=time_high)

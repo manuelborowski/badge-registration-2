@@ -367,7 +367,7 @@ const filter_menu_items = [
     {type: 'select', id: 'view_layout', label: 'Layout', options: [{value: "tile", label: "Tegel"}, {value: "list", label: "Lijst"}], default: "list", persistent: true},
     {
         type: 'select', id: 'period', label: 'Periode',
-        options: [{value: "today", label: "Vandaag"}, {value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week", persistent: true
+        options: [{value: "today", label: "Vandaag"}, {value: "yesterday", label: "Gisteren"}, {value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week", persistent: true
     },
 ]
 

@@ -35,8 +35,9 @@ from typing import Callable
 # 0.22: added hostname (scanner) for logging
 # 0.23: update export registrations
 # 0.24: bugfix in timeregistration
+# 0.25: improved time-registration, added more delay.  Added period yesterday. Added roepnaam to students
 
-version = "0.24"
+version = "0.25"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

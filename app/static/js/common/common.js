@@ -6,7 +6,10 @@ import {AlertPopup} from "./popup.js";
 const __handle_fetch = async resp => {
     const data = await resp.json();
     if (data.status) {
-        new AlertPopup(data.status, data.msg);
+        if (data.delay === undefined)
+            new AlertPopup(data.status, data.msg);
+        else
+            new AlertPopup(data.status, data.msg, data.delay);
         delete data.status;
         delete data.msg;
         if (Object.keys(data).length === 0) return null

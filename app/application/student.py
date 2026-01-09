@@ -54,6 +54,8 @@ def cron_student_load_from_sdh(opaque=None, **kwargs):
                             update["foto_id"] = sdh_student["foto_id"]
                         if db_student.instellingsnummer != sdh_student["instellingsnummer"]:
                             update["instellingsnummer"] = sdh_student["instellingsnummer"]
+                        if db_student.roepnaam != sdh_student["roepnaam"]:
+                            update["roepnaam"] = sdh_student["roepnaam"]
                         if update:
                             update.update({"item": db_student})
                             updated_students.append(update)
@@ -63,7 +65,7 @@ def cron_student_load_from_sdh(opaque=None, **kwargs):
                             updated_students.append({"item": db_student, "soep": db_student.soep[:5] + "/00000"})
                         del(db_leerlingnummer_to_student[sdh_student["leerlingnummer"]])
                     else:
-                        new_student = {"leerlingnummer": sdh_student["leerlingnummer"], "klascode": sdh_student["klascode"], "naam": sdh_student["naam"],
+                        new_student = {"leerlingnummer": sdh_student["leerlingnummer"], "klascode": sdh_student["klascode"], "naam": sdh_student["naam"], "roepnaam": sdh_student["roepnaam"],
                                              "voornaam": sdh_student["voornaam"], "middag": sdh_student["middag"], "rfid": sdh_student["rfid"], "foto_id": sdh_student["foto_id"],
                                              "lpv1_gsm": sdh_student["lpv1_gsm"], "lpv2_gsm": sdh_student["lpv2_gsm"], "instellingsnummer": sdh_student["instellingsnummer"], "username": sdh_student["username"]}
                         if sdh_student["soep"] != "":
