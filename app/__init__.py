@@ -36,8 +36,9 @@ from typing import Callable
 # 0.23: update export registrations
 # 0.24: bugfix in timeregistration
 # 0.25: improved time-registration, added more delay.  Added period yesterday. Added roepnaam to students
+# 0.26: bugfix socketio-update-registration
 
-version = "0.25"
+version = "0.26"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

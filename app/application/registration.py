@@ -359,10 +359,10 @@ def registration_send_message(ids):
             if student:
                 if location["type"] == "sms":
                     if __send_sms(registration, location, student):
-                        al.socketio.send_to_room({"type": "update-registration", "data": {"id": registration.id, "data": "flag1", "value": True}}, registration.location)
+                        al.socketio.send_to_room({"type": "update-registration", "data": {"id": registration.id, "flag1": True}}, registration.location)
                 elif location["type"] == "cellphone":
                     if __send_ss_message(registration, location, student):
-                        al.socketio.send_to_room({"type": "update-registration", "data": {"id": registration.id, "data": "flag1", "value": True} }, registration.location)
+                        al.socketio.send_to_room({"type": "update-registration", "data": {"id": registration.id, "flag1": True} }, registration.location)
             else:
                 log.error(f'{inspect.currentframe().f_code.co_name}: could not find student fore registration {id}')
         return {"status": "ok", "msg": "Berichten verstuurd"}
