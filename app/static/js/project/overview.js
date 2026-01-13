@@ -11,23 +11,25 @@ import {base_init} from "../base.js";
 
 // location specific data, parameters and processing is done per location
 class LocationBase {
-    table_config = {
-        title: "Overview", view: "overview",
+    constructor() {
+        this.table_config = {
+            view: "overview",
+        }
+
+        this.table_template = [
+            {name: "row_action", data: "row_action", orderable: false, width: "1%", visible: "always"},
+            {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"},
+            {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
+            {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
+            {name: "Klas", data: "klascode", orderable: true, width: "4%", visible: "yes"},
+        ]
+
+        this.context_menu_items = [
+            {level: 3, type: "item", label: "Exporteer registraties", iconscout: 'export', cb: () => this.export_registrations()},
+            {level: 3, type: "divider"},
+            {level: 3, type: "item", label: "Registratie verwijderen", iconscout: "trash-alt", cb: ids => this.delete_registration(ids)},
+        ]
     }
-
-    table_template = [
-        {name: "row_action", data: "row_action", orderable: false, width: "1%", visible: "always"},
-        {name: "Tijdstempel", data: "time_in", orderable: true, width: "4%", visible: "yes"},
-        {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
-        {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
-        {name: "Klas", data: "klascode", orderable: true, width: "4%", visible: "yes"},
-    ]
-
-    context_menu_items = [
-        {level: 3, type: "item", label: "Exporteer registraties", iconscout: 'export', cb: () => this.export_registrations()},
-        {level: 3, type: "divider"},
-        {level: 3, type: "item", label: "Registratie verwijderen", iconscout: "trash-alt", cb: ids => this.delete_registration(ids)},
-    ]
 
     canvas_element = document.getElementById("canvas");
     photo_size_factor = 50;
@@ -165,6 +167,7 @@ class LocationBase {
     render_list_view(registrations) {
         const initial_data = this.process_data_list(registrations);
         const config = Object.assign(this.table_config, {template: this.table_template});
+        config.view = `overview-${this.current_location.key}`;
         datatables_init({config, initial_data, context_menu_items: this.context_menu_items, callbacks: {created_row: (row, data, dataIndex, cells) => this.process_created_row_callback(data)}});
     }
 
@@ -255,52 +258,64 @@ class LocationBase {
 }
 
 class LocationCellphone extends LocationBase {
-    table_config = Object.assign(this.table_config, {width: "40%"});
+    constructor() {
+        super();
+        this.table_config = {...this.table_config, width: "40%"};
 
-    table_template = this.table_template.concat([
-        {name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
-        {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
-    ])
+        this.table_template = this.table_template.concat([
+            {name: "Bericht", data: "flag1", orderable: false, width: "4%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
+            {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
+        ])
 
-    context_menu_items = this.context_menu_items.concat([
-        {level: 3, type: "divider"},
-        {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
-        {level: 3, type: "divider"},
-        {level: 3, type: "item", label: "Stuur Smartschool bericht", iconscout: "envelope-send", cb: (ids) => this.send_message(ids)},
-    ])
+        this.context_menu_items = this.context_menu_items.concat([
+            {level: 3, type: "divider"},
+            {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
+            {level: 3, type: "divider"},
+            {level: 3, type: "item", label: "Stuur Smartschool bericht", iconscout: "envelope-send", cb: (ids) => this.send_message(ids)},
+        ])
+    }
 }
 
 class LocationToilet extends LocationBase {
-    table_config = Object.assign(this.table_config, {width: "40%"});
+    constructor() {
+        super();
+        this.table_config = {...this.table_config, width: "40%"};
 
-    table_template = this.table_template.concat([
-        {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
-    ])
+        this.table_template = this.table_template.concat([
+            {name: "Aantal", data: "aantal_items", orderable: false, width: "2%", visible: "yes"},
+        ])
 
-    context_menu_items = this.context_menu_items.concat([
-        {level: 3, type: "divider"}, {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
-    ])
+        this.context_menu_items = this.context_menu_items.concat([
+            {level: 3, type: "divider"}, {level: 3, type: "item", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()},
+        ])
+    }
 }
 
 class LocationVerkoop extends LocationBase {
-    table_config = Object.assign(table_config, {width: "40%"});
+    constructor() {
+        super();
+        this.table_config = {...this.table_config, width: "40%"};
+    }
 }
 
 class LocationSMS extends LocationBase {
-    table_config = Object.assign(this.table_config, {width: "70%"});
+    constructor() {
+        super();
+        this.table_config = {...this.table_config, width: "70%"};
 
-    table_template = this.table_template.concat([
-        {name: "SMS", data: "flag1", orderable: false, width: "2%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
-        {name: "Reden te laat", data: "text1", orderable: false, width: "40%", visible: "yes", celledit: {type: "text-confirmkey"}, display: {fields: [{field: "text1"}, {field: "flag2", colors: {true: "#CEEBCC"}}]}},
-    ])
+        this.table_template = this.table_template.concat([
+            {name: "SMS", data: "flag1", orderable: false, width: "2%", visible: "yes", display: {template: "%0%", fields: [{field: "flag1", bool: true}]}},
+            {name: "Reden te laat", data: "text1", orderable: false, width: "40%", visible: "yes", celledit: {type: "text-confirmkey"}, display: {fields: [{field: "text1"}, {field: "flag2", colors: {true: "#CEEBCC"}}]}},
+        ])
 
-    context_menu_items = [
-        {level: 3, type: "item", label: "Bevestig reden", iconscout: "check", cb: (ids) => this.set_reason_confirmation(ids, true)},
-        {level: 3, type: "item", label: "Verwijder bevestiging", iconscout: "minus", cb: (ids) => this.set_reason_confirmation(ids, false)},
-        {level: 3, type: "divider"},
-        {level: 3, type: "item", label: "Stuur SMS bericht", iconscout: "envelope-send", cb: (ids) => this.send_message(ids)},
-        {level: 3, type: "divider"},
-    ].concat(this.context_menu_items);
+        this.context_menu_items = [
+            {level: 3, type: "item", label: "Bevestig reden", iconscout: "check", cb: (ids) => this.set_reason_confirmation(ids, true)},
+            {level: 3, type: "item", label: "Verwijder bevestiging", iconscout: "minus", cb: (ids) => this.set_reason_confirmation(ids, false)},
+            {level: 3, type: "divider"},
+            {level: 3, type: "item", label: "Stuur SMS bericht", iconscout: "envelope-send", cb: (ids) => this.send_message(ids)},
+            {level: 3, type: "divider"},
+        ].concat(this.context_menu_items);
+    }
 
     async set_reason_confirmation(ids, confirm = true) {
         for (const id of ids) await fetch_update("registration.registration", {id, flag2: confirm});
@@ -308,20 +323,23 @@ class LocationSMS extends LocationBase {
 }
 
 class LocationTimeRegistration extends LocationBase {
-    table_template = [
-        {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
-        {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
-        {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
-        {name: "code", data: "code", orderable: true, width: "4%", visible: "yes"},
-        {name: "Tijd in", data: "time_in", orderable: true, width: "8%", visible: "yes"},
-        {name: "Startuur", data: "start", orderable: true, width: "4%", visible: "yes"},
-        {name: "Verschil", data: "time_in_diff", orderable: true, width: "4%", visible: "yes"},
-        {name: "Tijd uit", data: "time_out", orderable: true, width: "8%", visible: "yes"},
-        {name: "Einduur", data: "stop", orderable: true, width: "4%", visible: "yes"},
-        {name: "Verschil", data: "time_out_diff", orderable: true, width: "4%", visible: "yes"},
-        {name: "Dagverschil", data: "time_diff", orderable: true, width: "4%", visible: "yes"},
-        {name: "Opmerking", data: "info", orderable: true, width: "50%", visible: "yes", celledit: {type: "text-confirmkey"}},
-    ]
+    constructor() {
+        super();
+        this.table_template = [
+            {name: "row_action", data: "row_action", orderable: false, width: "2%", visible: "always"},
+            {name: "Naam", data: "naam", orderable: true, width: "4%", visible: "yes"},
+            {name: "Voornaam", data: "voornaam", orderable: true, width: "4%", visible: "yes"},
+            {name: "code", data: "code", orderable: true, width: "4%", visible: "yes"},
+            {name: "Tijd in", data: "time_in", orderable: true, width: "8%", visible: "yes"},
+            {name: "Startuur", data: "start", orderable: true, width: "4%", visible: "yes"},
+            {name: "Verschil", data: "time_in_diff", orderable: true, width: "4%", visible: "yes"},
+            {name: "Tijd uit", data: "time_out", orderable: true, width: "8%", visible: "yes"},
+            {name: "Einduur", data: "stop", orderable: true, width: "4%", visible: "yes"},
+            {name: "Verschil", data: "time_out_diff", orderable: true, width: "4%", visible: "yes"},
+            {name: "Dagverschil", data: "time_diff", orderable: true, width: "4%", visible: "yes"},
+            {name: "Opmerking", data: "info", orderable: true, width: "50%", visible: "yes", celledit: {type: "text-confirmkey"}},
+        ]
+    }
 
     process_data(data) {
         let start = "", stop = "", time_out_diff = "", time_diff = "", time_in_diff = "";
@@ -352,7 +370,7 @@ const location_processors = {
 let location_processor = null;
 const set_location_processor = () => {
     location_processor = location_processors[meta.locations[filters.location].type];
-    location_processor.location = meta.locations[filters.location];
+    location_processor.location = {...meta.locations[filters.location], key: filters.location};
 }
 
 const meta = await fetch_get("overview.meta");
@@ -362,12 +380,14 @@ let filter_menu = null;
 const location_filter_options = Object.entries(meta.locations).filter(i => i[1].access_level <= current_user.level || !i[1].access_level)
     .toSorted((a, b) => a[1].locatie.localeCompare(b[1].locatie))
     .map(([k, v]) => ({value: k, label: v.locatie}));
+
 const filter_menu_items = [
     {type: 'select', id: 'location', label: 'Locaties', options: location_filter_options, default: location_filter_options[0].value, persistent: true,},
     {type: 'select', id: 'view_layout', label: 'Layout', options: [{value: "tile", label: "Tegel"}, {value: "list", label: "Lijst"}], default: "list", persistent: true},
     {
         type: 'select', id: 'period', label: 'Periode',
-        options: [{value: "today", label: "Vandaag"}, {value: "yesterday", label: "Gisteren"}, {value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}], default: "last-week", persistent: true
+        options: [{value: "today", label: "Vandaag"}, {value: "yesterday", label: "Gisteren"}, {value: "last-week", label: "Laatste week"}, {value: "last-2-months", label: "Laatste 2 maanden"}, {value: "last-4-months", label: "Laatste 4 maanden"}],
+        default: "last-week", persistent: true
     },
 ]
 

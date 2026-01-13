@@ -37,8 +37,9 @@ from typing import Callable
 # 0.24: bugfix in timeregistration
 # 0.25: improved time-registration, added more delay.  Added period yesterday. Added roepnaam to students
 # 0.26: bugfix socketio-update-registration
+# 0.27: datatable state storage, made explicit so that it can be used on a single page with different tables.  Overview, updated derived classes
 
-version = "0.26"
+version = "0.27"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 

@@ -224,7 +224,7 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         },
         // This callback is executed each time the table is reloaded or a value is changed.
         rowCallback: function (row, data, displayNum, displayIndex, dataIndex) {
-            if (data.row_action !== null) row.cells[0].innerHTML = `<input type='checkbox' class='chbx_all' name='chbx' value='${data.row_action}' ${data.disable_selectbox ? "disabled": ""}>`
+            if (data.row_action !== null) row.cells[0].innerHTML = `<input type='checkbox' class='chbx_all' name='chbx' value='${data.row_action}' ${data.disable_selectbox ? "disabled" : ""}>`
             // celledit of type select: overwrite cell content with label from optionlist
             if (cell_edit.select_options) {
                 for (const [column, select] of Object.entries(cell_edit.select_options)) {
@@ -261,6 +261,13 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
                 dt_container.style.marginRight = "auto";
             }
         },
+        stateSaveCallback: function (settings, data) {
+            localStorage.setItem(`DatatableState-${ctx.config.view}`, JSON.stringify(data));
+        },
+        stateLoadCallback: function (settings, callback) {
+            const state = localStorage.getItem(`DatatableState-${ctx.config.view}`);
+            callback(JSON.parse(state));
+        }
     }
 
     if (ctx.server_side) {
@@ -301,7 +308,7 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
         await fetch_update(`${ctx.config.view}.${ctx.config.view}`, {id: $dt_row.data().DT_RowId, [column_name]: value});
     }
 
-    const  cell_toggle_changed_cb = async (cell, row, value) => {
+    const cell_toggle_changed_cb = async (cell, row, value) => {
         await fetch_update(`${ctx.config.view}.${ctx.config.view}`, {id: row.data().DT_RowId, [cell.index().column]: value});
     }
 
