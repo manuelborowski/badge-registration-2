@@ -129,7 +129,7 @@ def cron_student_load_from_sdh(opaque=None, **kwargs):
                             id = sdh_photo["id"]
                             decoded_photo = base64.b64decode(sdh_photo["photo"].encode("ascii"))
                             if id in id_to_photo_size:
-                                photo = get(Photo, {"id": id})
+                                photo = get(Photo, ("id", "=", id))
                                 update_photos.append({"item": photo, "photo": decoded_photo})
                                 log.info(f'{inspect.currentframe().f_code.co_name}, Update photo {id}')
                             else:

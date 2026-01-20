@@ -20,7 +20,7 @@ def send_inform_message(email_to, subject, message):
     if email_to:
         body = f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}<br>' \
                f'{message}<br><br>' \
-               f'School Data Hub'
+               f'Badge registration system'
         send_email(email_to, subject, body)
 
 # from app import email_log_handler
@@ -29,7 +29,7 @@ def email_log_handler(message):
     if to_list:
         body = f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M")}<br>' \
                f'{message}<br><br>' \
-               f'School Data Hub'
+               f'Badge registration system'
         send_email(to_list, f"{app.config["TITLE"].upper()} ERROR LOG", body)
 
 subscribe_email_log_handler_cb(email_log_handler)
