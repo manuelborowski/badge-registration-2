@@ -39,8 +39,9 @@ from typing import Callable
 # 0.26: bugfix socketio-update-registration
 # 0.27: datatable state storage, made explicit so that it can be used on a single page with different tables.  Overview, updated derived classes
 # 0.28: small bugifx
+# 0.29: update contextmenu
 
-version = "0.28"
+version = "0.29"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
