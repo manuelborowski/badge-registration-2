@@ -93,7 +93,7 @@ const __filter_changed_cb = (id, value) => {
     if (ctx.server_side) datatable_reload_table();
 }
 
-export const datatables_init = ({config = null, context_menu_items = [], filter_menu_items = [], action_menu_items = [], callbacks = {}, initial_data = null}) => {
+export const datatables_init = ({config = null, context_menu_items = [], filter_menu_items = [], action_menu_items = [], callbacks = {}, initial_data = null} = {}) => {
     // If a table already exist, remove it
     if (ctx.table) {
         ctx.table.destroy();
@@ -117,6 +117,7 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
             input.id = "select_all";
         } else {
             th.innerHTML = i.name;
+            if (i.tooltip) th.title = i.tooltip;
         }
     });
     document.querySelector(".container-fluid").innerHTML = "";
@@ -302,10 +303,11 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
     });
 
     const __cell_edit_changed_cb = async ($dt_row, column_index, new_value, old_value) => {
-        const value = ctx.config.template[column_index].celledit.value_type === 'int' ? parseInt(new_value) : new_value;
+        const value = ctx.config.template[column_index].celledit.value_type === 'int' ? parseInt(new_value) : new_value; // deprecated, user type "int" and new_value is of type int
         const column_name = ctx.table.column(column_index).dataSrc()
         // update_cell_changed({id: $dt_row.data().DT_RowId, column: column_name, value});
         await fetch_update(`${ctx.config.view}.${ctx.config.view}`, {id: $dt_row.data().DT_RowId, [column_name]: value});
+        if (callbacks.cell_edit) callbacks.cell_edit($dt_row.data().DT_RowId, column_name, value);
     }
 
     const cell_toggle_changed_cb = async (cell, row, value) => {

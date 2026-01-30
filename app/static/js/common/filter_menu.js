@@ -59,11 +59,10 @@ export class FilterMenu {
                     checkbox.id = item.id;
                     checkbox.classList.add("filter-form-control", "table-filter");
                     checkbox.addEventListener("click", e => {
-                        this.store_set_item(e.target.id, e.target.value);
-                        if ("cb" in this.menu_cache[e.target.id]) this.menu_cache[e.target.id].cb(e.target.value);
-                        this.changed_cb(e.target.id, e.target.value);
+                        this.store_set_item(e.target.id, e.target.checked);
+                        if ("cb" in this.menu_cache[e.target.id]) this.menu_cache[e.target.id].cb(e.target.checked);
+                        this.changed_cb(e.target.id, e.target.checked);
                     });
-                    this.store_set_item(item.id, default_value, true);
                 } else if (item.type === "button") {
                     const button = document.createElement("a");
                     form_group.appendChild(button);
