@@ -40,8 +40,10 @@ from typing import Callable
 # 0.27: datatable state storage, made explicit so that it can be used on a single page with different tables.  Overview, updated derived classes
 # 0.28: small bugifx
 # 0.29: update contextmenu
+# 0.30: sync with template
+# 0.31: add version update
 
-version = "0.29"
+version = "0.31"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
