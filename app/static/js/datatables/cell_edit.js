@@ -102,6 +102,8 @@ export class CellEdit {
         let new_value = event.currentTarget.value;
         if (column_config.type === "select") {
             $dt_cell.data(this.select_options[column_index][new_value]);
+        } else if (column_config.type === "date") {
+            $dt_cell.data(new_value);
         } else if (column_config.type === "bool") {
             $dt_cell.data(this.select_options[column_index][new_value]);
             new_value = new_value === "true";

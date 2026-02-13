@@ -42,8 +42,9 @@ from typing import Callable
 # 0.29: update contextmenu
 # 0.30: sync with template
 # 0.31: add version update
+# 0.32: update in cell_edit
 
-version = "0.31"
+version = "0.32"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
