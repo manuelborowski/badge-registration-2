@@ -11,40 +11,7 @@ from typing import Callable
 
 #Warning: update flask_jsglue.py: from markupsafe import Markup
 
-# 0.1 copy from stopwatch V0.28
-# 0.2: replaced sys._getframe() with inspect
-# 0.3: aesthetic updates
-# 0.4: implemented heartbeat
-# 0.5: overview works
-# 0.6: aesthetical udpates.  Added timeregistration, a seperate page with autologin to set up as a terminal.  Integrated RFID scanner
-# 0.7: added generic registration view.  Overview, updated context menu.  Added export registrations and send smartschool message.  Moved functions in LocationBase
-# 0.8: small aesthetic updates.
-# 0.9: small updates
-# 0.10: student new rfid -> push to SDH
-# 0.11: added mobile registration support
-# 0.12: added support for sms/student-too-late
-# 0.13: updated kiosk mode
-# 0.14: mobile, updated navigation lint
-# 0.15: mobile, able to update registration.
-# 0.16: update login screen
-# 0.17: rfidserial: show warning when scanner is disconnected
-# 0.18: on linux, when disconnecting the scanner, chromium loses the serial port
-# 0.19: reverted to standalone rfid scanner, connected via websocket
-# 0.20: user_agents, set default to "" to avoid exceptions
-# 0.21: bugfix filter (today) and remove reset button
-# 0.22: added hostname (scanner) for logging
-# 0.23: update export registrations
-# 0.24: bugfix in timeregistration
-# 0.25: improved time-registration, added more delay.  Added period yesterday. Added roepnaam to students
-# 0.26: bugfix socketio-update-registration
-# 0.27: datatable state storage, made explicit so that it can be used on a single page with different tables.  Overview, updated derived classes
-# 0.28: small bugifx
-# 0.29: update contextmenu
-# 0.30: sync with template
-# 0.31: add version update
-# 0.32: update in cell_edit
-
-version = "0.32"
+version = "0.33"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
