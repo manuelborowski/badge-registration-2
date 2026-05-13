@@ -148,6 +148,8 @@ def auto_login_generic():
             user = dl.user.update(user, {"last_login": datetime.datetime.now()})
             if not user:
                 log.error('Could not save timestamp')
+            location = request.args.get("location", None)
+            if location: app.config["LIMIT_LOCATION_TO"] = location
             return redirect(url_for(app.config["MENU_DEFAULT"]))
     return render_template('login.html', message={"status": "error", "data": "Fout bij autologin"}, qr_img=None, qr_caption="")
 

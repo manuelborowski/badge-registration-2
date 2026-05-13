@@ -31,3 +31,4 @@
 0.31: add version update
 0.32: update in cell_edit
 0.33: rfidserial, clean up
+0.34: kiosk mode, add argument to limit location

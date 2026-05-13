@@ -3,7 +3,7 @@ from flask import render_template, request, Blueprint
 from flask_login import login_required
 from app.data.registration import Registration
 from app.data.settings import get_configuration_setting
-from app import application as al, data as dl
+from app import application as al, data as dl, app
 
 from app import log
 
@@ -18,6 +18,10 @@ def show():
 @login_required
 def meta():
     locations = get_configuration_setting("location-profiles")
+    if "LIMIT_LOCATION_TO" in app.config:
+        limit_location = app.config["LIMIT_LOCATION_TO"]
+        if limit_location in locations:
+            locations = {limit_location: locations[limit_location]}
     return json.dumps({"locations": locations,})
 
 @bp_overview.route('/overview', methods=['GET', "UPDATE"])
