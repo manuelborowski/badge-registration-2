@@ -32,3 +32,4 @@
 0.32: update in cell_edit
 0.33: rfidserial, clean up
 0.34: kiosk mode, add argument to limit location
+0.35: store limited-location in session, not in app-context
