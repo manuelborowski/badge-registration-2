@@ -149,6 +149,12 @@ class LocationBase {
         data.disable_selectbox = true;
     }
 
+    check_highlight(data) {
+        if (!("highlight" in this.current_location)) return;
+        if (!Array.isArray(data.highlight)) return;
+        if (data.highlight.includes(this.current_location.key)) data.row_color = this.current_location.highlight;
+    }
+
     process_data(data) {
         return Object.assign(data, {row_action: data.id, DT_RowId: data.id});
     }
@@ -162,6 +168,7 @@ class LocationBase {
 
     process_created_row_callback(data, row) {
         this.check_rules(data);
+        this.check_highlight(data);
     }
 
     render_list_view(registrations) {
@@ -431,4 +438,3 @@ $(document).ready(async function () {
     socketio.subscribe_on_receive("update-registration", (type, data) => location_processor.update_single_registration(type, data));
     socketio.subscribe_on_receive("update-registrations", (type, data) => location_processor.update_registrations(type, data));
 });
-

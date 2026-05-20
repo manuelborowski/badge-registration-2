@@ -175,6 +175,11 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
 
     const render = (v) => {
         if ("ellipsis" in v) return_render_ellipsis(v.ellipsis.cutoff, v.ellipsis.wordbreak, true);
+        if ("join" in v) return (data, type, full, meta) => {
+            const labels = "label" in v && "labels" in v.label ? v.label.labels : {};
+            const label = value => labels[value] || value;
+            return Array.isArray(data) ? data.map(label).join(v.join) : label(data);
+        };
         if ("bool" in v) return (data, type, full, meta) => data === true ? "&#10003;" : "";
         if ("label" in v) return (data, type, full, meta) => v.label.labels[data]
         if ("color" in v) {
@@ -323,4 +328,3 @@ export const datatables_init = ({config = null, context_menu_items = [], filter_
     base_init({action_menu_items});
     return ctx
 }
-

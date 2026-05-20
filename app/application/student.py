@@ -152,13 +152,15 @@ def update(data):
     try:
         student = dl.models.get(Student, ("id", "=", data["id"]))
         del data["id"]
-        if ("rfid" in data):
+        update_rfid = "rfid" in data
+        if update_rfid:
             student_rfid = dl.models.get(Student, ("rfid", "=", data["rfid"]))
             if student_rfid and student.id != student_rfid.id:
                 return {"status": "warning", "msg": f"RFID bestaat al voor leerling {student_rfid.naam} {student_rfid.voornaam}"}
         ret = dl.models.update(Student, student, data)
         if (ret):
-            push_new_rfid_to_sdh(student.leerlingnummer, ret.rfid)
+            if update_rfid:
+                push_new_rfid_to_sdh(student.leerlingnummer, ret.rfid)
             return ret.to_dict()
         return {"status": "warning", "msg": f"Onbekende fout"}
     except Exception as e:
@@ -200,5 +202,4 @@ def format_data(db_list, total_count=None, filtered_count=None):
         })
         out.append(em)
     return total_count, filtered_count, out
-
 

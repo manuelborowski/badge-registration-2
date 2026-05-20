@@ -17,9 +17,11 @@ def add(model, data=None, commit=True, timestamp=False):
         for k, v in data.items():
             if hasattr(obj, k):
                 expression_type = getattr(model, k).expression.type
-                if expression_type.python_type == type(v) or (isinstance(expression_type, db.Date) or isinstance(expression_type, db.DateTime)) and v == None:
+                if isinstance(expression_type, db.JSON):
+                    setattr(obj, k, v)
+                elif expression_type.python_type == type(v) or (isinstance(expression_type, db.Date) or isinstance(expression_type, db.DateTime)) and v == None:
                     setattr(obj, k, v.strip() if isinstance(v, str) else v)
-                if isinstance(expression_type, db.DateTime) and type(v) == str:
+                elif isinstance(expression_type, db.DateTime) and type(v) == str:
                     value = datetime.datetime.strptime(v, "%Y-%m-%d %H:%M:%S")
                     setattr(obj, k, value)
         if timestamp:
@@ -52,7 +54,9 @@ def update(model, obj, data=None, commit=True, timestamp=False):
         for k, v in data.items():
             if hasattr(obj, k):
                 expression_type = getattr(model, k).expression.type
-                if v is None:
+                if isinstance(expression_type, db.JSON):
+                    setattr(obj, k, v)
+                elif v is None:
                     setattr(obj, k, v)
                 elif expression_type.python_type == type(v) or (isinstance(expression_type, db.Date) or isinstance(expression_type, db.DateTime)) and v is None:
                     setattr(obj, k, v.strip() if isinstance(v, str) else v)
@@ -188,4 +192,3 @@ def get_m(model, filters=None, fields=None, order_by=None, first=False, count=Fa
 
 def get_columns(model):
     return [p for p in dir(model) if not p.startswith('_')]
-

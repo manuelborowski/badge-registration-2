@@ -23,6 +23,7 @@ class Student(db.Model, SerializerMixin):
     soep = db.Column(db.String(256), default='')
     lpv1_gsm = db.Column(db.String(256), default='')
     lpv2_gsm = db.Column(db.String(256), default='')
+    highlight = db.Column(db.JSON, default=list)
     timestamp = db.Column(db.DateTime)
 
     new = db.Column(db.Boolean, default=True)

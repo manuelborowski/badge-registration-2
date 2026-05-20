@@ -16,6 +16,21 @@ const __new_registration = (ids) => {
     });
 }
 
+const __mark_student = async ids => {
+    const student = datatable_row_data_from_id(ids[0]);
+    const highlight = [...(student.highlight || [])];
+    const location_index = highlight.indexOf(location_key);
+    if (location_index >= 0) {
+        highlight.splice(location_index, 1);
+    } else {
+        highlight.push(location_key);
+    }
+    const ret = await fetch_update("student.student", {id: student.id, highlight});
+    if (ret) {
+        datatable_update_cell(student.id, "highlight", ret.highlight || []);
+    }
+}
+
 let __new_rfid_student = null;
 const __new_rfid = (ids) => {
     __new_rfid_student = datatable_row_data_from_id(ids[0]);
@@ -92,6 +107,8 @@ const context_menu_items = [
     {type: "divider"},
     {type: "item", iconscout: "export", label: "Exporteer leerling rekeningen", cb: __export_balances_cb},
     {type: "item", iconscout: "print", label: "Exporteer leerling printer rekeningen", cb: __import_papercut_data_cb},
+    {type: "divider"},
+    {type: "item", label: "(On)markeer student", iconscout: "tag", cb: ids => __mark_student(ids)},
 ]
 
 // called when an RFID is scanned or the state changes.
