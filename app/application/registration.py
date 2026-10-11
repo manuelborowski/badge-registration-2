@@ -247,7 +247,7 @@ def clear_all_registrations(location):
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
         return False
 
-def get_balance(location_key, startdate, enddate):
+def get_balance(school, location_key, startdate, enddate):
     try:
         locations = get_configuration_setting("location-profiles")
         if location_key not in locations:
@@ -255,11 +255,11 @@ def get_balance(location_key, startdate, enddate):
             return f"{location_key} is not a valid key", "error.txt"
         else:
             location = locations[location_key]
-        if "school" not in location:
-            log.error(f'{inspect.currentframe().f_code.co_name}: {location} has no school parameter')
-            return f"{location} has no school parameter", "error.txt"
-        else:
-            school = location["school"]
+        # if "school" not in location:
+        #     log.error(f'{inspect.currentframe().f_code.co_name}: {location} has no school parameter')
+        #     return f"{location} has no school parameter", "error.txt"
+        # else:
+        #     school = location["school"]
         startdate = startdate.split("T")[0]
         enddate = enddate.split("T")[0]
         db_students = dl.models.get_m(Student)

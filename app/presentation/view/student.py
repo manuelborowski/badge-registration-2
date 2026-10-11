@@ -45,12 +45,12 @@ def student():
     log.error(f'{inspect.currentframe().f_code.co_name}:  incorrect request method {request.method}')
     return json.dumps({"status": "error", "msg": f"Verkeerde request methode: {request.method}"})
 
-@bp_student.route('/student/balance/<string:location>/<string:startdate>/<string:enddate>', methods=['GET'])
+@bp_student.route('/student/balance/<string:school>/<string:location>/<string:startdate>/<string:enddate>', methods=['GET'])
 @login_required
 @level_3_required
-def export_balance(location, startdate, enddate):
+def export_balance(school, location, startdate, enddate):
     try:
-        [balance_data, filename] = al.registration.get_balance(location, startdate,enddate)
+        [balance_data, filename] = al.registration.get_balance(school, location, startdate, enddate)
         return send_file(io.BytesIO(str.encode(balance_data)), as_attachment=True, download_name=filename, max_age=0)
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')

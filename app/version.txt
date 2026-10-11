@@ -34,3 +34,4 @@
 0.34: kiosk mode, add argument to limit location
 0.35: store limited-location in session, not in app-context
 0.36: add functionality to highlight a student when it scans AND is marked
+0.37: type "aankoop", multiple schools per location are possible

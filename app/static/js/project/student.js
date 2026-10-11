@@ -65,7 +65,10 @@ const __export_balances_cb = async () => {
                     const form_data = bform.get_data();
                     for (const [key, location] of Object.entries(meta.locations)) {
                         if (location.type === "verkoop") {
-                            window.open(`/student/balance/${key}/${form_data.from}/${form_data.till}`, '_blank');
+                            const scholen = Array.isArray(location.school) ? location.school : [location.school];
+                            for(const school of scholen) {
+                                window.open(`/student/balance/${school}/${key}/${form_data.from}/${form_data.till}`, '_blank');
+                            }
                         }
                     }
                 }
