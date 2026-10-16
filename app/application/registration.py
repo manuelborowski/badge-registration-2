@@ -174,6 +174,7 @@ def registration_delete(id):
                    later_registration.aantal_items -= 1
             commit()
             delete(Registration, id)
+            log.info(f'{inspect.currentframe().f_code.co_name}: {registration}')
             return {"status": "ok", "msg": f"Registratie verwijderd", "data": {"status": True}}
     except Exception as e:
         log.error(f'{inspect.currentframe().f_code.co_name}: {e}')
