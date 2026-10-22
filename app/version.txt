@@ -37,3 +37,4 @@
 0.37: type "aankoop", multiple schools per location are possible
 0.38: update websocket
 0.39: add logging when deleting registration
+0.40: update smartschool message send
