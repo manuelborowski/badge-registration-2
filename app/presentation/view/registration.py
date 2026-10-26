@@ -3,7 +3,7 @@ import json, inspect
 from flask import request, Blueprint, render_template, render_template_string
 from flask_login import login_required
 from app import application as al, data as dl
-from app.presentation.view import level_3_required
+from app.presentation.view import level_2_required, level_3_required
 from app.data.registration import Registration
 
 #logging on file level
@@ -70,7 +70,7 @@ def sendmessage():
     return json.dumps({"status": "error", "msg": f"Verkeerde request methode: {request.method}"})
 
 @bp_registration.route('/registration/export', methods=['GET'])
-@level_3_required
+@level_2_required
 @login_required
 def export():
     try:

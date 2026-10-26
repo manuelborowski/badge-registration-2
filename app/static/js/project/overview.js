@@ -25,7 +25,7 @@ class LocationBase {
         ]
 
         this.context_menu_items = [
-            {level: 3, type: "item", label: "Exporteer registraties", iconscout: 'export', cb: () => this.export_registrations()},
+            {level: 2, type: "item", label: "Exporteer registraties", iconscout: 'export', cb: () => this.export_registrations()},
             {level: 3, type: "divider"},
             {level: 3, type: "item", label: "Registratie verwijderen", iconscout: "trash-alt", cb: ids => this.delete_registration(ids)},
         ]

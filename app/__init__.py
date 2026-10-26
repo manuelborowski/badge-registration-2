@@ -12,7 +12,7 @@ from typing import Callable
 
 #Warning: update flask_jsglue.py: from markupsafe import Markup
 
-version = "0.43"
+version = "0.44"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
