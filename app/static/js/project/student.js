@@ -104,14 +104,14 @@ const __import_papercut_data_cb = async () => {
 }
 
 const context_menu_items = [
-    {type: "item", label: `Nieuwe registratie: ${meta.locations[location_key].locatie}`, iconscout: 'plus-circle', cb: ids => __new_registration(ids)},
-    {type: "divider"},
-    {type: "item", iconscout: "wifi", label: "RFID code aanpassen", cb: ids => __new_rfid(ids)},
-    {type: "divider"},
-    {type: "item", iconscout: "export", label: "Exporteer leerling rekeningen", cb: __export_balances_cb},
-    {type: "item", iconscout: "print", label: "Exporteer leerling printer rekeningen", cb: __import_papercut_data_cb},
-    {type: "divider"},
-    {type: "item", label: "(On)markeer student", iconscout: "tag", cb: ids => __mark_student(ids)},
+    {level: 1, type: "item", label: `Nieuwe registratie: ${meta.locations[location_key].locatie}`, iconscout: 'plus-circle', cb: ids => __new_registration(ids)},
+    {level: 3, type: "divider"},
+    {level: 3, type: "item", iconscout: "wifi", label: "RFID code aanpassen", cb: ids => __new_rfid(ids)},
+    {level: 3, type: "divider"},
+    {level: 3, type: "item", iconscout: "export", label: "Exporteer leerling rekeningen", cb: __export_balances_cb},
+    {level: 3, type: "item", iconscout: "print", label: "Exporteer leerling printer rekeningen", cb: __import_papercut_data_cb},
+    {level: 3, type: "divider"},
+    {level: 3, type: "item", label: "(On)markeer student", iconscout: "tag", cb: ids => __mark_student(ids)},
 ]
 
 // called when an RFID is scanned or the state changes.

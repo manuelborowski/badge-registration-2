@@ -69,3 +69,7 @@ def level_2_required(func):
             abort(403)
         return func(*args, **kwargs)
     return decorated_view
+
+def fixed_location_user():
+    from flask import session
+    return bool(session.get("FIXED_LOCATION_USER"))

@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, send_file
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app.data.datatables import DatatableConfig
 from app import data as dl, application as al
-from app.presentation.view import datatable_get_data, level_3_required
+from app.presentation.view import datatable_get_data, level_3_required, fixed_location_user
 from app.data.settings import get_configuration_setting
 import json, inspect, io
 
@@ -14,31 +14,44 @@ log.addFilter(MyLogFilter())
 bp_student = Blueprint('student', __name__)
 
 @bp_student.route('/studentshow', methods=['GET'])
-@level_3_required
 @login_required
 def show():
+    if current_user.level < 1:
+        from flask import abort
+        abort(403)
     return render_template("project/student.html", table_config=config.create_table_config())
 
 @bp_student.route('/student/dt', methods=['POST'])
-@level_3_required
 @login_required
 def dt():
+    if current_user.level < 1:
+        from flask import abort
+        abort(403)
     params = json.loads(request.data)
     return datatable_get_data(config, params)
 
 @bp_student.route('/student/meta', methods=['GET'])
-@level_3_required
 @login_required
 def meta():
+    if current_user.level < 1:
+        from flask import abort
+        abort(403)
+    if fixed_location_user():
+        from flask import session
+        locations = get_configuration_setting("location-profiles")
+        key = session.get("LIMIT_LOCATION_TO")
+        locations = {key: locations[key]} if key in locations else {}
+        return json.dumps({"location": locations})
     location = get_configuration_setting("location-profiles")
-    return json.dumps({
-        "location": location,
-    })
+    return json.dumps({"location": location,})
 
 @bp_student.route('/student', methods=["UPDATE"])
 @level_3_required
 @login_required
 def student():
+    if fixed_location_user():
+        from flask import abort
+        abort(403)
     if request.method == "UPDATE":
         ret = al.student.update(json.loads(request.data))
         return json.dumps(ret)

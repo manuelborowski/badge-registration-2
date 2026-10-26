@@ -1,7 +1,7 @@
 from user_agents import parse
 import json, inspect
-from flask import request, Blueprint, render_template, render_template_string
-from flask_login import login_required
+from flask import request, Blueprint, render_template, render_template_string, session, abort
+from flask_login import login_required, current_user
 from app import application as al, data as dl
 from app.presentation.view import level_2_required, level_3_required
 from app.data.registration import Registration
@@ -24,17 +24,29 @@ def show():
     return render_template_string("<h1>Fout, verkeerde url</h1>")
 
 @bp_registration.route('/registration', methods=["POST", "DELETE", "UPDATE"])
-@level_3_required
 @login_required
 def registration():
     if request.method == "POST":
+        if current_user.level < 1:
+            abort(403)
         params = json.loads(request.data)
+        location_key = params.get("location_key")
+        if "LIMIT_LOCATION_TO" in session and location_key != session["LIMIT_LOCATION_TO"]:
+            abort(403)
         ret = al.registration.registration_add(params)
         return json.dumps(ret)
     if request.method == "DELETE":
+        if current_user.level < 1:
+            abort(403)
+        if "LIMIT_LOCATION_TO" in session:
+            item = dl.models.get(Registration, ("id", "=", request.args["id"]))
+            if not item or item.location != session["LIMIT_LOCATION_TO"]:
+                abort(403)
         ret = al.registration.registration_delete(request.args["id"])
         return json.dumps(ret)
     if request.method == "UPDATE":
+        if current_user.level < 3:
+            abort(403)
         data = json.loads(request.data)
         item = dl.models.get(Registration, ("id", "=", data["id"]))
         del data["id"]

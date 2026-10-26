@@ -169,3 +169,18 @@ def auto_login_generic():
             return redirect(url_for(app.config["MENU_DEFAULT"]))
     return render_template('login.html', message={"status": "error", "data": "Fout bij autologin"}, qr_img=None, qr_caption="")
 
+@bp_auth.route('/fixedlocation', methods=['GET'])
+def fixed_location():
+    key = request.args.get("key")
+    locations = dl.settings.get_configuration_setting("location-profiles")
+    location = next((name for name, profile in locations.items() if profile.get("key") == key), None) if key else None
+    if not location:
+        return render_template('login.html', message={"status": "error", "data": "Ongeldige locatiecode"}, qr_img=None, qr_caption=""), 403
+    user = dl.models.get(dl.user.User, ('username', "c=", "fixed-location"))
+    if not user:
+        return render_template('login.html', message={"status": "error", "data": "Gebruiker fixed-location niet gevonden"}, qr_img=None, qr_caption=""), 403
+    login_user(user)
+    session["FIXED_LOCATION_USER"] = True
+    session["LIMIT_LOCATION_TO"] = location
+    return redirect(url_for('overview.show'))
+
