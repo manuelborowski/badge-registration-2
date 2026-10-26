@@ -56,7 +56,7 @@ def meta():
     user_type_option = [{"value": k, "label": v} for k, v in user_type_label.items()]
     return json.dumps({
         "option": {"level": user_level_option, "user_type": user_type_option},
-        "default": {"level": 1, "user_type": dl.user.User.USER_TYPE.LOCAL},
+        "default": {"level": 1, "user_type": dl.user.User.USER_TYPE.LOCAL, "remote": False},
     })
 
 class Config(DatatableConfig):

@@ -15,6 +15,7 @@ const template =
                 {type: "input", label: "Email", name: "email"},
                 {type: "select", label: "Niveau", name: "level", typecast: "integer"},
                 {type: "select", label: "Type", name: "user_type"},
+                {type: "check", label: "Toegang vanaf publiek adres toestaan", name: "remote"},
                 {type: "check", label: "Nieuw wachtwoord?", id: "new-password-check"},
                 {type: "input", label: "Paswoord", id: "new-password", name: "password"},
                 {type: "input", label: "Bevestig paswoord", id: "new-password-confirm"},

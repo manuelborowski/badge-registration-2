@@ -39,3 +39,4 @@
 0.39: add logging when deleting registration
 0.40: update smartschool message send
 0.41: update requirements.txt
+0.42: restrict access from remote ip

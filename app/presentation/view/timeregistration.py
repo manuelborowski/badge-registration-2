@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, render_template_string
 from flask_login import login_user
 from app import data as dl
 import datetime
+from app.private_access import user_ip_allowed
 
 #logging on file level
 import logging
@@ -17,6 +18,8 @@ def auto_login():
     if "AUTO_LOGIN_STAFF_REGISTRATION_KEY" in app.config and "AUTO_STAFF_REGISTRATION_USER" in app.config:
         if key == app.config["AUTO_LOGIN_STAFF_REGISTRATION_KEY"]:
             user = dl.models.get(dl.user.User, ('username', "c=", app.config["AUTO_STAFF_REGISTRATION_USER"]))  # c= : case sensitive comparison
+            if not user_ip_allowed(user, request.environ):
+                return render_template_string("<h1>Verboden toegang</h1>")
             login_user(user)
             log.info(u'user {} logged in'.format(user.username))
             user = dl.user.update(user, {"last_login": datetime.datetime.now()})

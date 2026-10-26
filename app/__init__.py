@@ -7,11 +7,12 @@ from flask_jsglue import JSGlue
 from flask_migrate import Migrate
 from flask_apscheduler import APScheduler
 from werkzeug.routing import IntegerConverter
+from sqlalchemy import inspect as sa_inspect, text
 from typing import Callable
 
 #Warning: update flask_jsglue.py: from markupsafe import Markup
 
-version = "0.41"
+version = "0.42"
 
 app = Flask(__name__, instance_relative_config=True, template_folder='presentation/template/')
 
@@ -87,6 +88,11 @@ def default_db_entries():
         try:
             from app.data.user import User
             from app import data as dl
+            db.create_all()
+            user_columns = {column["name"] for column in sa_inspect(db.engine).get_columns("users")}
+            if "remote" not in user_columns:
+                with db.engine.begin() as connection:
+                    connection.execute(text("ALTER TABLE users ADD COLUMN remote BOOLEAN NOT NULL DEFAULT FALSE"))
             # create default accounts, if not present
             for user in app.config["DEFAULT_USERS"]:
                 find_user = User.query.filter(User.username == user[0]).first()

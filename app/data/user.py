@@ -42,6 +42,7 @@ class User(UserMixin, db.Model, SerializerMixin):
     last_login = db.Column(db.DateTime())
     rfid = db.Column(db.String(256), default=None)
     pin = db.Column(db.String(256), default=None)
+    remote = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
 
     @property
     def is_local(self):
@@ -124,6 +125,10 @@ def filter(query_in):
 # @login_manager.user_loader
 def load_user(user_id):
     user = User.query.get(int(user_id))
+    from flask import request
+    from app.private_access import user_ip_allowed
+    if not user_ip_allowed(user, request.environ):
+        return None
     return user
 
 def pre_sql_query():

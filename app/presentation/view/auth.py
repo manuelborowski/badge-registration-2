@@ -3,6 +3,7 @@ from flask_login import login_required, login_user, logout_user
 from app import app, data as dl
 from user_agents import parse
 import datetime, json, inspect, qrcode, io, base64
+from app.private_access import user_ip_allowed
 
 #logging on file level
 import logging
@@ -38,6 +39,9 @@ def login():
                 if secret_pin == login_pin:
                     users = dl.models.get_m(dl.user.User, ("first_name", "=", "pinlogin"), order_by="last_login")
                     user = users[0]
+                    if not user_ip_allowed(user, request.environ):
+                        message = {"status": "error", "data": "Aanmelden vanaf dit IP-adres is niet toegestaan"}
+                        return render_template('m/login.html', message=message, pin_enabled=app.config["MOBILE_PIN_ENABLE"])
                     login_user(user)
                     log.info(f'user {user.username} logged in')
                     user = dl.user.update(user, {"last_login": datetime.datetime.now()})
@@ -53,6 +57,10 @@ def login():
             else:
                 user = dl.models.get(dl.user.User,('username', "c=", request.form["username"])) # c= : case sensitive comparison
                 if user is not None and user.verify_password(request.form["password"]):
+                    if not user_ip_allowed(user, request.environ):
+                        log.warning(f'Login blocked by IP restriction for user {user.username}')
+                        message = {"status": "error", "data": "Aanmelden vanaf dit IP-adres is niet toegestaan"}
+                        return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
                     login_user(user)
                     log.info(f'user {user.username} logged in')
                     user = dl.user.update(user, {"last_login": datetime.datetime.now()})
@@ -119,6 +127,9 @@ def login_ss():
                     else:
                         log.info('New users not allowed via smartschool')
                         return redirect(url_for('auth.login'))
+                if not user_ip_allowed(user, request.environ):
+                    log.warning(f'Login blocked by IP restriction for user {user.username}')
+                    return redirect(url_for('auth.login'))
                 login_user(user)
                 log.info(f'OAUTH user {user.username} logged in')
                 if not user:
@@ -143,6 +154,8 @@ def auto_login_generic():
     if "AUTO_LOGIN_KEY" in app.config and "AUTO_USER" in app.config:
         if app.config["AUTO_LOGIN_KEY"] == key:
             user = dl.models.get(dl.user.User,('username', "c=", app.config["AUTO_USER"])) # c= : case sensitive comparison
+            if not user_ip_allowed(user, request.environ):
+                return render_template('login.html', message={"status": "error", "data": "Aanmelden vanaf dit IP-adres is niet toegestaan"}, qr_img=None, qr_caption="")
             login_user(user)
             log.info(u'user {} logged in'.format(user.username))
             user = dl.user.update(user, {"last_login": datetime.datetime.now()})
