@@ -39,6 +39,10 @@ class LocationBase {
     set location(current_location) {
         this.current_location = current_location;
         this.create_rules_cache();
+        this.context_menu_items = this.context_menu_items.filter(item => item.action !== "reset-counter");
+        if (current_location.reset_counters === true) {
+            this.context_menu_items.push({level: 3, type: "item", action: "reset-counter", label: "Tellers op nul zetten", iconscout: "0-plus", cb: () => this.reset_counters()});
+        }
     }
 
     export_registrations = async () => {

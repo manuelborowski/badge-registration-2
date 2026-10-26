@@ -43,3 +43,4 @@
 0.43: restrict access from remote ip, bugfix
 0.44: level 2 can export
 0.45: added fixed-location, i.e. level 1, cannot change location, limited contextmenu
+0.46: verkoop: it is possible to use sequence_counters

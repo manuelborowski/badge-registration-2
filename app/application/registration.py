@@ -128,6 +128,9 @@ def registration_add(params):
                     current_qty += 1
                     mask = mask[:day_index + 6] + str(current_qty) + mask[day_index + 7:]
                     update(Student, student, {location["dagmasker"]: mask})
+                if location.get("reset_counters") is True:
+                    last_registration = get(Registration, [("person_id", "=", student.leerlingnummer), ("location", "=", location_key)], order_by="-id")
+                    nbr_items = last_registration.aantal_items + 1 if last_registration else 1
                 registration = add(Registration, {"person_id": student.leerlingnummer, "location": location_key, "time_in": now, "prijs_per_item": artikel["prijs-per-item"], "aantal_items": nbr_items})
             # When a student is too late in, scan its badge.  An sms is sent to the parents and a why-too-late reason needs to be added
             # If the student returns with a valid proof of being late, tick the registration as being acknowledged/finished
@@ -139,8 +142,8 @@ def registration_add(params):
             # Depending on the number of times, a rule is invoked to color the scan and/or send smartschool messages
             # aantal_items: store the sequence-counter
             # flag1: message sent
-            elif location["type"] in ["cellphone", "toilet", "sms"]:
-                if student.school not in location["school"]:
+            elif location["type"] in ["cellphone", "toilet", "sms"] or location.get("reset_counters") is True:
+                if "school" in location and student.school not in location["school"]:
                     return {"status": "warning", "msg": f"Student {student.naam} {student.voornaam} zit in een andere school, {student.school}"}
                 last_registration = get(Registration, [("person_id", "=", student.leerlingnummer), ("location", "=", location_key)], order_by="-id")
                 if last_registration:
@@ -168,10 +171,12 @@ def registration_delete(id):
     try:
         registration = get(Registration, ("id", "=", id))
         if registration:
-            later_registrations = get_m(Registration, [("time_in", ">", registration.time_in), ("location", "=", registration.location), ("person_id", "=", registration.person_id)])
-            for later_registration in later_registrations:
-               if later_registration.aantal_items > 1:
-                   later_registration.aantal_items -= 1
+            location = get_configuration_setting("location-profiles").get(registration.location, {})
+            if location.get("reset_counters") is True or location.get("type") in ["cellphone", "toilet", "sms"]:
+                later_registrations = get_m(Registration, [("time_in", ">", registration.time_in), ("location", "=", registration.location), ("person_id", "=", registration.person_id)])
+                for later_registration in later_registrations:
+                    if later_registration.aantal_items > 1:
+                        later_registration.aantal_items -= 1
             commit()
             delete(Registration, id)
             log.info(f'{inspect.currentframe().f_code.co_name}: {registration}')
@@ -182,18 +187,21 @@ def registration_delete(id):
 
 def registration_zero_counters(location, date):
     try:
+        location_profile = get_configuration_setting("location-profiles").get(location, {})
+        reset_counters = location_profile.get("reset_counters") is True or location_profile.get("type") in ["cellphone", "toilet", "sms"]
         date = f"{date} 23:59" # consider the end of the day, else the <= below does not work properly
         registrations = get_m(Registration, [("location", "=", location), ("time_in", "<=", date)])
         for registration in registrations:
             registration.active = False
-        registrations = get_m(Registration, [("location", "=", location), ("time_in", ">", date)])
-        aantal_items_cache = {}
-        for registration in registrations:
-            if registration.person_id in aantal_items_cache:
-                registration.aantal_items -= aantal_items_cache[registration.person_id]
-            else:
-                aantal_items_cache[registration.person_id] = registration.aantal_items - 1
-                registration.aantal_items = 1
+        if reset_counters:
+            registrations = get_m(Registration, [("location", "=", location), ("time_in", ">", date)], order_by="time_in")
+            aantal_items_cache = {}
+            for registration in registrations:
+                if registration.person_id in aantal_items_cache:
+                    registration.aantal_items -= aantal_items_cache[registration.person_id]
+                else:
+                    aantal_items_cache[registration.person_id] = registration.aantal_items - 1
+                    registration.aantal_items = 1
         commit()
         ret = {"status": "ok", "msg": "tellers zijn op nul gezet"}
         return ret
