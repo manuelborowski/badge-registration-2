@@ -40,3 +40,4 @@
 0.40: update smartschool message send
 0.41: update requirements.txt
 0.42: restrict access from remote ip
+0.43: restrict access from remote ip, bugfix

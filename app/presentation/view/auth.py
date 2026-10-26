@@ -14,7 +14,8 @@ log.addFilter(MyLogFilter())
 bp_auth = Blueprint('auth', __name__, )
 
 @bp_auth.route('/', methods=["GET", 'POST'])
-def login():
+@bp_auth.route('/<string:error_message>', methods=["GET", 'POST'])
+def login(error_message=None):
     try:
         message = None
         user_agent_str = request.headers.get('User-Agent', "")
@@ -76,6 +77,8 @@ def login():
         if user_agent.is_mobile:
             return render_template('m/login.html', pin_enabled=app.config["MOBILE_PIN_ENABLE"])
         else:
+            if error_message:
+                message = {"status": "error", "data": error_message}
             return render_template('login.html', message=message, qr_img=img_base64, qr_caption=app.config["MOBILE_LOGIN_CAPTION"])
     except Exception as e:
         message = {"status": "error", "data": f"{str(e)}"}
@@ -129,7 +132,7 @@ def login_ss():
                         return redirect(url_for('auth.login'))
                 if not user_ip_allowed(user, request.environ):
                     log.warning(f'Login blocked by IP restriction for user {user.username}')
-                    return redirect(url_for('auth.login'))
+                    return redirect(url_for('auth.login', error_message="Aanmelden vanaf dit IP-adres is niet toegestaan"))
                 login_user(user)
                 log.info(f'OAUTH user {user.username} logged in')
                 if not user:
